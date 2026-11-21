@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pathline – ניהול פרויקטים לצוות</title>
+<meta name="description" content="כלי לניהול פרויקטים לצוות: נתיב קריטי, לוח משימות אישי לכל עובד, תמונת מצב למנהל, תזכורות, הודעות וקופיילוט.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, exact working tool for an Israeli project team; the manager's control room.
+   IDEA: a survey map; the critical path is the magenta route, each person a marked trail.
+   PICTURE: health score and live forecast for the manager, a personal board for each employee, a right-to-left Gantt.
+   COLOUR and TYPE: sea band, paper land, magenta route, contour-brown float; Rubik.
+   LAYOUT: headline finding and KPIs on the sea band, role-based tabs, copilot drawer on the side. */
+:root{color-scheme:light dark;
+--bg:light-dark(#fbfbf2,#0d1c24);--ink:light-dark(#13242e,#e4ecee);--soft:light-dark(#4d5f68,#9fb2b9);
+--sea:light-dark(#bfe3ee,#143545);--sea2:light-dark(#3f8fa9,#5fb3cc);--line:light-dark(#dcd8c6,#28434f);
+--brown:light-dark(#a8551b,#d9925c);--mag:light-dark(#d6127e,#ff4fa8);--card:light-dark(#ffffff,#112631);
+--med:light-dark(#f2d9c0,#4d3424);--low:light-dark(#e3f2f7,#183f50);
+--bad:light-dark(#c62828,#ff6b6b);--warn:light-dark(#b86e00,#f0a73a);--warnbg:light-dark(#fde9c4,#4a3510);--good:light-dark(#2e7d4f,#5cc58a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Rubik,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3.2vw,44px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.top{background:var(--sea);padding-bottom:18px}
+.bar1{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.brand{font-weight:800;font-size:15px;color:var(--mag);margin-inline-end:4px}
+input,select,textarea,button{font:inherit;font-size:16px;color:var(--ink)}
+input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-height:44px;width:100%}
+textarea{min-height:90px;resize:vertical}
+input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--mag);flex:none}
+input[type=range]{padding:0;border:0;background:none;accent-color:var(--mag)}
+:focus-visible{outline:3px solid var(--mag);outline-offset:2px}
+#pname{flex:1 1 220px;width:auto;font-weight:700;background:transparent;border-color:transparent;font-size:18px}
+#pname:hover,#pname:focus{background:var(--card);border-color:var(--line)}
+.pn{flex:1 1 220px;font-weight:700;font-size:18px}
+.lbl{font-size:14px;color:var(--soft);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.lbl select{width:auto;min-width:130px}
+.btn{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--ink);background:transparent;cursor:pointer;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn.p{background:var(--ink);color:var(--bg)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.warn{border-color:var(--bad);color:var(--bad)}
+.badge{background:var(--bad);color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:0 7px;line-height:20px;min-width:20px;text-align:center}
+.badge:empty{display:none}
+h1{font-size:clamp(26px,3.8vw,42px);line-height:1.12;font-weight:800;margin:20px 0 8px;text-wrap:balance}
+.sub{margin:0;font-size:17px;max-width:75ch}
+.demo{margin:16px 0 0;display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--bg);border-radius:999px;padding:6px 14px;font-size:14px}
+.demo b{color:var(--mag);font-weight:700}
+.sub b{color:var(--bad);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:18px}
+.k{background:var(--bg);border-radius:12px;padding:12px 14px}
+.k span{display:block;font-size:13px;color:var(--soft)}
+.k b{font-size:clamp(22px,2.6vw,28px);font-weight:800;white-space:nowrap}
+.k b.bad{color:var(--bad)}.k b.good{color:var(--good)}.k b.mid{color:var(--warn)}
+.k small{display:block;font-size:13px;color:var(--soft)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.tabs button{min-height:44px;padding:0 18px;border-radius:999px;border:0;color:var(--ink);font-weight:500;background:var(--bg);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tabs button[aria-current=page]{background:var(--ink);color:var(--bg)}
+h2{font-size:22px;font-weight:800;margin:0}
+h3{font-size:17px;margin:0 0 8px;font-weight:700}
+.head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:28px 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.note{font-size:14px;color:var(--soft)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.g2{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+.g3{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));margin-top:16px}
+.empty{padding:24px;text-align:center;color:var(--soft)}
+/* health */
+.hs{display:flex;gap:16px;align-items:center}
+.hsn{font-size:64px;font-weight:800;line-height:1;color:var(--good)}
+.hsn.mid{color:var(--warn)}.hsn.bad{color:var(--bad)}
+.hl1{font-size:20px;font-weight:700}
+.drv{list-style:none;padding:0;margin:12px 0 0}
+.drv li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.drv li span:last-child{color:var(--bad);font-weight:700;white-space:nowrap}
+.cmpb{margin-top:14px;display:grid;gap:6px;font-size:14px}
+.cmpb>div{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center}
+.cmpb>div>span:last-child{text-align:end;font-weight:700}
+.pbar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--sea2);border-radius:4px}
+.pbar i.pl{background:var(--soft)}.pbar i.bad{background:var(--bad)}
+/* alerts */
+.al{list-style:none;padding:0;margin:8px 0 0}
+.al li{padding:10px 0;border-bottom:1px solid var(--line);display:grid;gap:4px}
+.al li .row{margin-top:2px}
+.al .lv{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--warn);margin-inline-end:8px}
+.al .high .lv{background:var(--bad)}
+/* team */
+.team{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.mc{display:grid;gap:10px;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;font:inherit;color:var(--ink)}
+.mc:hover{border-color:var(--sea2)}
+.mh{display:flex;gap:10px;align-items:center}
+.av{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;line-height:1;color:#fff;font-weight:700;font-size:15px;flex:none}
+.av.lg{width:52px;height:52px;font-size:22px}
+.av.sm{width:26px;height:26px;font-size:12px}
+.ms{font-size:13px;color:var(--soft);display:flex;flex-wrap:wrap;gap:4px 10px}
+.ms b{color:var(--bad);font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;border-radius:999px;padding:2px 9px;background:var(--low);white-space:nowrap;font-weight:500}
+.chip.bad{background:var(--bad);color:#fff}.chip.warn{background:var(--warnbg)}.chip.crit{background:transparent;border:1px solid var(--mag);color:var(--mag);padding:1px 8px}.chip.ok{background:var(--sea)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+/* heat */
+.heat{border-collapse:separate;border-spacing:3px;font-size:12px}
+.heat th{font-weight:500;color:var(--soft);white-space:nowrap;padding:2px 4px;border:0;font-size:12px}
+.heat td{border:0;padding:0}
+.heat .c{display:block;min-width:38px;height:30px;border-radius:6px;text-align:center;line-height:30px;background:var(--low);font-variant-numeric:tabular-nums}
+.heat .l0{background:transparent;border:1px dashed var(--line);color:var(--soft)}
+.heat .l2{background:var(--sea);}.heat .l3{background:var(--bad);color:#fff;font-weight:700}
+.heat .now{outline:2px solid var(--ink)}
+.scroll{overflow-x:auto}
+/* lists */
+.fl-l,.act{list-style:none;padding:0;margin:8px 0 0}
+.fl-l li,.act li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.fl-l li.due{color:var(--bad)}
+.act .t{font-size:14px}.act .t q{display:block;color:var(--soft);quotes:none}
+.grow{flex:1}
+/* board */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.col{background:var(--low);border-radius:14px;padding:10px;min-height:160px}
+.col h3{display:flex;justify-content:space-between;font-size:15px;margin:2px 4px 4px}
+.col h3 span{color:var(--soft);font-weight:500}
+.kc{display:grid;gap:8px;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:8px;cursor:pointer;font:inherit;color:var(--ink)}
+.kc:hover{border-color:var(--sea2)}
+.kt{font-weight:500;line-height:1.35}.kt small{color:var(--soft);font-weight:400;margin-inline-end:4px}
+.km{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:6px}
+/* gantt */
+.gantt{display:grid;grid-template-columns:minmax(120px,250px) minmax(0,1fr)}
+.gl{padding-top:28px}
+.gr{height:34px;display:flex;align-items:center;gap:8px;font-size:14px;padding-inline-end:8px}
+.gr span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gr.c span:last-child{color:var(--mag);font-weight:700}
+.gid{flex:none;width:24px;font-size:13px;color:var(--soft);text-align:center}
+.gt{position:relative;min-height:80px}
+.gt svg{position:absolute;inset:0;width:100%;height:100%;direction:ltr}
+.tk{stroke:var(--line)}.tl{fill:var(--soft);font:12px Rubik,sans-serif}
+.rowbg{fill:var(--sea);opacity:.28}
+.b{fill:var(--sea2)}.b.c{fill:var(--mag)}.pg{fill:#000;opacity:.28}
+.anim .b,.anim .pg{transform-box:fill-box;transform-origin:right;animation:grow .7s ease-out}
+@keyframes grow{from{transform:scaleX(0)}}
+@media(prefers-reduced-motion:reduce){.anim .b,.anim .pg{animation:none}}
+.fl{stroke:var(--brown);stroke-width:2;stroke-dasharray:3 3}
+.lk{stroke:var(--soft);fill:none;opacity:.55}.lk.c{stroke:var(--mag);opacity:.9}
+.rk{fill:var(--card);stroke:var(--bad);stroke-width:2}
+.td{stroke:var(--ink);stroke-width:2}.tdt{fill:var(--ink);font:700 12px Rubik,sans-serif}
+.wib{stroke:var(--ink);stroke-width:2}.bl{stroke:var(--soft);stroke-width:2;stroke-dasharray:6 4}.blt{fill:var(--soft);font:500 12px Rubik,sans-serif}
+.lg{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--soft);margin-top:12px}
+.lg i{display:inline-block;width:18px;height:10px;border-radius:3px;margin-inline-end:6px;vertical-align:middle}
+.wi{margin-bottom:16px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:center}
+.wi .row{flex-wrap:nowrap}.wi select{flex:1 1 auto}
+.stp{display:flex;align-items:center;gap:6px;flex:none}.stp input{width:72px;text-align:center}.stp button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:20px}
+.wir{font-size:16px;background:var(--bg);border-radius:12px;padding:14px 16px;min-height:76px}.wir b{font-size:19px}.wir b.up{color:var(--bad)}
+/* tables */
+table{width:100%;border-collapse:collapse}
+th{font-size:13px;color:var(--soft);font-weight:500;text-align:start;padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums}
+td input,td select{min-height:40px;padding:6px 8px}
+.w-d{width:72px}.w-id{width:34px}.w-s{width:66px}.w-l{width:170px}.w-st{width:110px}.w-o{width:130px}.w-c{width:36px}
+.cp{color:var(--mag);font-weight:700;font-size:13px;white-space:nowrap}
+.x{width:44px;height:44px;border:0;background:transparent;cursor:pointer;color:var(--soft);font-size:22px;border-radius:8px;flex:none}
+.x:hover{color:var(--bad);background:var(--low)}
+/* risks */
+.rgrid{display:grid;gap:20px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+.mx{display:grid;grid-template-columns:28px repeat(5,minmax(0,1fr));gap:5px;align-items:center}
+.mx button{min-height:50px;border:0;border-radius:8px;cursor:pointer;font-weight:800;font-size:18px}
+.mx .low{background:var(--low)}.mx .med{background:var(--warnbg)}.mx .high{background:var(--bad);color:#fff}
+.mx button.z{font-weight:400;opacity:.55}
+.mx button.sel{outline:3px solid var(--ink);outline-offset:1px}
+.ax{font-size:13px;color:var(--soft);text-align:center}
+.sc{display:inline-block;min-width:34px;text-align:center;border-radius:6px;padding:2px 6px;font-weight:800}
+.sc.low{background:var(--low)}.sc.med{background:var(--warnbg)}.sc.high{background:var(--bad);color:#fff}
+.onp{display:block;font-size:12px;color:var(--mag);font-weight:500;white-space:nowrap;margin-top:2px}
+/* messages */
+.th{list-style:none;padding:0;margin:8px 0 0}
+.th li{padding:12px 0;border-bottom:1px solid var(--line);display:grid;gap:6px}
+.th li.un{background:linear-gradient(to left,var(--low),transparent 70%);padding-inline:10px;border-radius:8px}
+.mt{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:14px}
+.mt .note{font-size:13px}
+.mtx{white-space:pre-wrap}
+details summary{cursor:pointer;color:var(--mag);font-size:14px;min-height:32px;display:inline-flex;align-items:center}
+.linkb{border:0;background:none;color:var(--mag);cursor:pointer;font:inherit;font-size:14px;text-decoration:underline;padding:0 4px;min-height:36px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.fchips button{border:1px solid var(--line);background:var(--card);border-radius:999px;min-height:36px;padding:0 12px;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.fchips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* modal, drawer, pop */
+.modal{position:fixed;inset:0;background:rgba(8,18,24,.5);display:grid;place-items:center;padding:16px;z-index:50}
+.mbox{background:var(--bg);border-radius:16px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.mtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg button.blk[aria-pressed=true]{background:var(--bad);border-color:var(--bad)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+.facts div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px}
+.facts span{display:block;font-size:12px;color:var(--soft)}
+.sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.drawer{position:fixed;top:0;bottom:0;inset-inline-end:0;width:min(440px,100%);background:var(--bg);box-shadow:0 0 50px rgba(0,0,0,.25);z-index:60;display:flex;flex-direction:column}
+.drawer[hidden],.pop[hidden]{display:none}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--sea)}
+#copLog{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.bub{padding:10px 12px;border-radius:12px;max-width:92%;font-size:15px;line-height:1.55}
+.bub.u{background:var(--ink);color:var(--bg);align-self:flex-start}
+.bub.a{background:var(--card);border:1px solid var(--line);align-self:flex-end}
+.bub.a ul{margin:4px 0;padding-inline-start:18px}
+#copChips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 8px}
+#copChips button{border:1px solid var(--line);background:var(--card);border-radius:999px;min-height:34px;padding:0 12px;cursor:pointer;font-size:13px}
+#copForm{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+#copForm textarea{min-height:48px;height:48px}
+.pop{position:fixed;top:12px;inset-inline-end:12px;width:min(400px,calc(100% - 24px));max-height:80vh;overflow:auto;z-index:55;box-shadow:0 16px 50px rgba(0,0,0,.25)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:70;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:1}
+footer{color:var(--soft);font-size:13px}
+@media(max-width:900px){.rgrid,.wi,.g2{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft)}.stack td:empty{display:none}.w-d,.w-id,.w-s,.w-l,.w-st,.w-o,.w-c{width:auto}.gantt{grid-template-columns:110px minmax(0,1fr)}.board{grid-template-columns:minmax(0,1fr)}.col{min-height:0}.hsn{font-size:52px}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+  <div class="bar1">
+    <span class="brand">Pathline</span>
+    <input id="pname" aria-label="שם הפרויקט">
+    <span id="pnameRO" class="pn" hidden></span>
+    <label class="lbl" id="asWrap"><span id="asLbl">צפייה בתור</span><select id="as" aria-label="צפייה בתור"></select></label>
+    <button class="btn" id="bellBtn" aria-label="התראות ותזכורות">התראות <span class="badge" id="badge"></span></button>
+    <button class="btn p" id="copBtn">קופיילוט</button>
+    <button class="btn" id="undo" title="ביטול הפעולה האחרונה">ביטול</button>
+  </div>
+  <p class="demo" id="demo" hidden></p>
+  <h1 id="h1">טוען…</h1>
+  <p class="sub" id="sub"></p>
+  <div class="kpis" id="kpis"></div>
+  <nav class="tabs" id="tabs" aria-label="תצוגות"></nav>
+</div></header>
+<main class="band"><div class="wrap" id="main"></div></main>
+<footer class="band" style="padding-top:0"><div class="wrap" id="foot">Pathline – ניהול פרויקטים לצוות: נתיב קריטי, לוח אישי לכל עובד, תמונת מצב למנהל וקופיילוט. נבנה על ידי מיקי בייזרמן.</div></footer>
+<div id="modal"></div>
+<div id="bell" class="pop card" hidden></div>
+<aside id="cop" class="drawer" hidden aria-label="קופיילוט">
+  <div class="dh"><div><b>קופיילוט הפרויקט</b><div class="note" id="copNote"></div></div><button class="x" id="copClose" aria-label="סגירה">×</button></div>
+  <div id="copLog"></div>
+  <div id="copChips"></div>
+  <form id="copForm"><textarea id="copIn" placeholder="שאלו כל דבר על הפרויקט…" aria-label="שאלה לקופיילוט"></textarea><button class="btn p" type="submit">שליחה</button></form>
+</aside>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+{
+/* ---------- constants & helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KEY='pathline.team.v1',VKEY='pathline.team.view';
+const HOL=[['2026-04-02','פסח'],['2026-04-08','שביעי של פסח'],['2026-04-22','יום העצמאות'],['2026-05-22','שבועות'],['2026-09-12','ראש השנה'],['2026-09-13','ראש השנה'],['2026-09-21','יום כיפור'],['2026-09-26','סוכות'],['2026-10-03','שמחת תורה'],
+ ['2027-04-22','פסח'],['2027-04-28','שביעי של פסח'],['2027-05-12','יום העצמאות'],['2027-06-11','שבועות'],['2027-10-02','ראש השנה'],['2027-10-03','ראש השנה'],['2027-10-11','יום כיפור'],['2027-10-16','סוכות'],['2027-10-23','שמחת תורה']];
+const HOLM=new Map(HOL);
+const WEEK={'sun-thu':[0,1,2,3,4],'mon-fri':[1,2,3,4,5],'all':[0,1,2,3,4,5,6]};
+const RST={Open:'פתוח',Mitigating:'בטיפול',Closed:'סגור'};
+const TS={todo:'לביצוע',doing:'בעבודה',blocked:'תקוע',done:'הושלם'};
+const KIND={note:'הערה',clarify:'חידוד',req:'בקשת עדכון',assign:'משימה חדשה',progress:'עדכון התקדמות',reply:'תגובה',blocked:'דיווח על חסם'};
+const COLORS=['#3f8fa9','#d6127e','#a8551b','#1f5f8b','#b7791f','#5b6b73','#7a4fa0','#2d7d7a'];
+const COLLS=['members','tasks','risks','msgs','followups','standups'];
+const DAY=864e5;
+const isoRe=/^\d{4}-\d{2}-\d{2}$/;
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const dOf=s=>new Date(s+'T00:00:00');
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const TODAY=iso(today0());
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const num=(v,lo,hi,d)=>{const n=Math.round(+v);return Number.isFinite(n)?Math.min(hi,Math.max(lo,n)):d};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const dur=t=>Math.max(0,Math.round(+t.dur||0));
+const lvl=s=>s>=15?'high':s>=8?'med':'low';
+const lastDay=(es,ef)=>Math.max(es,ef-1);
+const plural=(n,one,many)=>n===1?one:`${n} ${many}`;
+function ago(ms){if(!ms)return 'אף פעם';const m=Math.round((Date.now()-ms)/6e4);if(m<1)return 'עכשיו';if(m<60)return `לפני ${plural(m,'דקה','דקות')}`;const h=Math.round(m/60);if(h<24)return h===1?'לפני שעה':h===2?'לפני שעתיים':`לפני ${h} שעות`;const d=Math.round(h/24);return d===1?'אתמול':d===2?'לפני יומיים':`לפני ${d} ימים`}
+const wa=t=>'https://wa.me/?text='+encodeURIComponent(t);
+let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),2800)}
+
+/* ---------- sample project (relative to today) ---------- */
+function sample(){
+  const t=today0();let s=addDays(t,-21);while(s.getDay()!==0)s=addDays(s,-1);
+  const now=Date.now(),H=36e5;
+  let lw=addDays(t,-1);while(!WEEK['sun-thu'].includes(lw.getDay()))lw=addDays(lw,-1);const LW=iso(lw);
+  const members=[['m1','נועה','מנהלת מוצר'],['m2','דנה','מעצבת ממשק'],['m3','עומר','מפתח צד שרת'],['m4','ליאור','מפתח צד לקוח'],['m5','עמית','בודק תוכנה'],['m6','יעל','שיווק']].map(([id,name,title],i)=>({id,name,title,color:COLORS[i],userId:null}));
+  const T=(id,name,d,deps,ownerId,status,progress,x)=>Object.assign({id,name,dur:d,deps,ownerId,status:status||'todo',progress:progress||0,blockReason:'',updatedAt:now-30*H,doneAt:null},x||{});
+  const tasks=[
+    T(1,'אפיון ומסמך דרישות',5,[],'m1','done',100,{doneAt:iso(addDays(s,4)),updatedAt:now-17*DAY}),
+    T(2,'אפיון חוויית משתמש',7,[1],'m2','done',100,{doneAt:iso(addDays(s,15)),updatedAt:now-8*DAY}),
+    T(3,'תכנון ארכיטקטורה',4,[1],'m3','done',100,{doneAt:iso(addDays(t,-5)),updatedAt:now-5*DAY}),
+    T(4,'עיצוב ממשק',6,[2],'m2','blocked',80,{blockReason:'מחכה לאישור צבעי המותג מהלקוח',updatedAt:now-26*H}),
+    T(5,'פיתוח צד שרת',12,[3],'m3','doing',60,{updatedAt:now-4*DAY}),
+    T(6,'פיתוח צד לקוח',10,[4,3],'m4'),
+    T(7,'אינטגרציה',4,[5,6],'m4'),
+    T(8,'בדיקות ותיקון באגים',6,[7],'m5'),
+    T(9,'תוכנית שיווק',5,[1],'m6','done',100,{doneAt:iso(addDays(s,9)),updatedAt:now-12*DAY}),
+    T(10,'חומרים לחנויות האפליקציות',3,[4,9],'m6'),
+    T(11,'גרסת בטא עם 20 משתמשים',7,[8],'m1'),
+    T(12,'הגשה לחנויות והשקה',2,[10,11],'m1')];
+  const R=(id,title,p,i,taskId,ownerId,mitigation,status)=>({id,title,p,i,taskId,ownerId,mitigation,status:status||'Open'});
+  const risks=[
+    R(1,'בעלי עניין מוסיפים פיצ׳רים אחרי סגירת האפיון',4,4,1,'m1','בקשות שינוי נכנסות לרשימת המתנה ונבחנות פעם בשבוע','Mitigating'),
+    R(2,'חנות האפליקציות דוחה את ההגשה הראשונה',3,5,12,'m1','בדיקה מול הנחיות החנויות והגשת גרסת ניסיון מוקדמת'),
+    R(3,'הלקוח מתעכב באישורי עיצוב',4,4,4,'m2','לקבוע מועד אישור קבוע בכל יום חמישי'),
+    R(4,'מפתח צד לקוח נקרא למילואים',2,5,6,'m4','עבודה בזוגות כך ששני אנשים מכירים כל רכיב'),
+    R(5,'עיכוב בגישה לסביבת הבדיקות של ספק התשלומים',2,4,5,'m3','לפתח מול שרת מדומה ולהסלים את בקשת הגישה'),
+    R(6,'הבטא מגייסת פחות מ־20 משתמשים פעילים',3,3,11,'m6','לגייס 35 משתמשים כדי לפצות על נשירה')];
+  const M=(id,from,to,taskId,kind,text,at,read)=>({id,from,to,taskId,kind,text,at,read:!!read});
+  const msgs=[
+    M('s1','m3','mgr',5,'progress','סיימתי את ממשק ההרשמה וההתחברות. נשאר חיבור לספק התשלומים.',now-4*DAY,true),
+    M('s2','mgr','m2',4,'clarify','הלקוח ביקש לבדוק גם גרסה כהה למסך הבית. אפשר לשלב בסבב הנוכחי?',now-2*DAY,true),
+    M('s3','m2','mgr',4,'blocked','אני תקועה עד שנקבל אישור על צבעי המותג. שלחתי ללקוח ביום שלישי ועוד לא חזרו אליי.',now-26*H,false),
+    M('s4','mgr','m3',5,'req','עומר, אפשר עדכון קצר על החיבור לספק התשלומים? רוצה לוודא שאנחנו בזמן.',now-20*H,false),
+    M('s5','mgr','m4',6,'note','ליאור, ברגע שהעיצוב מאושר אתה מתחיל. בינתיים אפשר להקים את שלד הפרויקט.',now-6*H,false)];
+  const followups=[{id:'f1',text:'לבדוק עם הלקוח את אישור צבעי המותג',due:TODAY,memberId:'m2',taskId:4,done:false},{id:'f2',text:'שיחת סטטוס עם עומר על הסליקה',due:iso(addDays(t,2)),memberId:'m3',taskId:5,done:false}];
+  const SU=(m,y,td,b,at)=>({id:m+'_'+LW,memberId:m,date:LW,y,t:td,b,at});
+  const standups=[SU('m3','סגרתי באגים בממשק ההרשמה','חיבור לסביבת הבדיקות של ספק התשלומים','עדיין אין גישה לסביבת הבדיקות',now-40*H),SU('m6','סיימתי טיוטת דף נחיתה','צילומי מסך לחנויות','',now-42*H),SU('m1','סקירת סיכונים עם הצוות','הכנת תוכנית הבטא','',now-41*H)];
+  return{meta:{name:'השקת אפליקציה – גרסה ראשונה',start:iso(s),manager:'מיקי',cal:{week:'sun-thu',holidays:true,off:[]}},members,tasks,risks,msgs,followups,standups};
+}
+const emptyState=()=>({meta:{name:'פרויקט חדש',start:TODAY,manager:'מנהל הפרויקט',cal:{week:'sun-thu',holidays:true,off:[]}},members:[],tasks:[],risks:[],msgs:[],followups:[],standups:[]});
+
+/* ---------- templates ---------- */
+const TPL=[
+ {name:'פיתוח אפליקציה',desc:'מאפיון ועד השקה בחנויות',tasks:[['אפיון ומסמך דרישות',5,[]],['אפיון חוויית משתמש',7,[1]],['תכנון ארכיטקטורה',4,[1]],['עיצוב ממשק',6,[2]],['פיתוח צד שרת',12,[3]],['פיתוח צד לקוח',10,[4,3]],['אינטגרציה',4,[5,6]],['בדיקות ותיקון באגים',6,[7]],['תוכנית שיווק',5,[1]],['חומרים לחנויות האפליקציות',3,[4,9]],['גרסת בטא',7,[8]],['הגשה לחנויות והשקה',2,[10,11]]]},
+ {name:'השקת אתר',desc:'אתר תדמית או אתר מכירות',tasks:[['פגישת התנעה ודרישות',2,[]],['מפת אתר ותוכן',4,[1]],['עיצוב דפים',8,[2]],['כתיבת תכנים',6,[2]],['פיתוח האתר',10,[3]],['קידום במנועי חיפוש',4,[4,5]],['בדיקות בדפדפנים ובנייד',3,[5]],['העלאה לאוויר',1,[6,7]],['הדרכת הלקוח',1,[8]]]},
+ {name:'הפקת אירוע או כנס',desc:'מתקציב ועד סיכום',tasks:[['הגדרת מטרות ותקציב',3,[]],['בחירת מקום',5,[1]],['דוברים ותוכן',10,[1]],['ספקים: קייטרינג והגברה',7,[2]],['שיווק והרשמה',15,[2,3]],['לוגיסטיקה והסעות',5,[4]],['חזרה גנרלית',1,[5,6]],['יום האירוע',1,[7]],['סיכום ומשוב',2,[8]]]},
+ {name:'הטמעת מערכת בארגון',desc:'למשל מערכת לניהול לקוחות',tasks:[['מיפוי תהליכים',5,[]],['בחירת ספק',7,[1]],['הגדרות והתאמות',10,[2]],['הסבת נתונים',6,[2]],['הדרכות לעובדים',4,[3]],['פיילוט במחלקה אחת',10,[3,4,5]],['עלייה לאוויר',2,[6]],['תמיכה אחרי עלייה',10,[7]]]},
+ {name:'פרויקט ריק',desc:'מתחילים מאפס',tasks:[]}];
+
+/* ---------- normalize ---------- */
+const valid=s=>s&&typeof s==='object'&&Array.isArray(s.tasks);
+function nMeta(m){m=m||{};const c=m.cal||{};return{name:String(m.name??'פרויקט חדש'),start:isoRe.test(m.start)?m.start:TODAY,manager:String(m.manager??'מנהל הפרויקט'),cal:{week:WEEK[c.week]?c.week:'sun-thu',holidays:c.holidays!==false,off:Array.isArray(c.off)?c.off.filter(d=>isoRe.test(d)):[]}}}
+const NORM={
+ members:m=>m&&m.id!=null?{id:String(m.id),name:String(m.name??''),title:String(m.title??''),color:/^#[0-9a-f]{6}$/i.test(m.color)?m.color:COLORS[0],userId:m.userId?String(m.userId):null}:null,
+ tasks:t=>t&&Number.isFinite(+t.id)?{id:+t.id,name:String(t.name??''),dur:num(t.dur,0,9999,1),deps:Array.isArray(t.deps)?t.deps.map(Number).filter(Number.isFinite):[],ownerId:t.ownerId!=null&&t.ownerId!==''?String(t.ownerId):null,status:TS[t.status]?t.status:'todo',progress:num(t.progress,0,100,0),blockReason:String(t.blockReason??''),updatedAt:+t.updatedAt||0,doneAt:isoRe.test(t.doneAt)?t.doneAt:null}:null,
+ risks:r=>r&&Number.isFinite(+r.id)?{id:+r.id,title:String(r.title??''),p:num(r.p,1,5,3),i:num(r.i,1,5,3),taskId:r.taskId==null||r.taskId===''?null:+r.taskId,ownerId:r.ownerId?String(r.ownerId):null,mitigation:String(r.mitigation??''),status:RST[r.status]?r.status:'Open'}:null,
+ msgs:x=>x&&x.id!=null?{id:String(x.id),from:String(x.from??'mgr'),to:String(x.to??'mgr'),taskId:x.taskId==null||x.taskId===''?null:+x.taskId,kind:KIND[x.kind]?x.kind:'note',text:String(x.text??''),at:+x.at||0,read:!!x.read}:null,
+ followups:f=>f&&f.id!=null?{id:String(f.id),text:String(f.text??''),due:isoRe.test(f.due)?f.due:TODAY,memberId:f.memberId?String(f.memberId):null,taskId:f.taskId==null||f.taskId===''?null:+f.taskId,done:!!f.done}:null,
+ standups:s=>s&&s.id!=null?{id:String(s.id),memberId:String(s.memberId??''),date:isoRe.test(s.date)?s.date:TODAY,y:String(s.y??''),t:String(s.t??''),b:String(s.b??''),at:+s.at||0}:null};
+function norm(s){const o={meta:nMeta(s.meta)};for(const c of COLLS)o[c]=(Array.isArray(s[c])?s[c]:[]).map(NORM[c]).filter(Boolean);return o}
+
+/* ---------- state & storage ---------- */
+let S=null,MODE='local',db=null,userCap=null,isOwner=false,myUid=null,readOnly=false,loaded=false;
+let VIEW='mgr',tab=null,teamSel=null,modal=null,bellOpen=false,wi={id:null,days:2},rfilter=null,mfilter='all',clearArm=false,chat=[],firstDraw=true,sel=new Set(),hist=[],txBuf=null,lastK=null,pendingRender=false;
+try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(valid(s))S=norm(s)}}catch(e){}
+if(!S)S=norm(sample());
+VIEW='mgr';
+function saveLocal(){if(MODE!=='local')return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const wq={};
+function dbWrite(path,data){const run=()=>data?db.doc(path).set(JSON.parse(JSON.stringify(data))):db.doc(path).delete();
+  wq[path]=(wq[path]||Promise.resolve()).then(()=>run().catch(e=>{if(e&&e.code==='unavailable')return new Promise(r=>setTimeout(r,600+Math.random()*800)).then(run);throw e})).catch(dbErr)}
+function dbErr(e){const c=e&&e.code;if(c==='invalid_argument'){if(!readOnly){readOnly=true;toast('אין לך הרשאה לשנות את הפרויקט הזה. בקשו מהמנהל הרשאת עריכה.')}}else if(c==='quota_exceeded')toast('המקום במאגר הנתונים מלא. מחקו הודעות או עדכונים ישנים.');else if(c==='revoked')toast('הגישה לפרויקט השתנתה.');else toast('השמירה נכשלה. נסו שוב בעוד רגע.');render()}
+const get=(c,id)=>S[c].find(x=>String(x.id)===String(id));
+function put(c,obj){const a=S[c],i=a.findIndex(x=>String(x.id)===String(obj.id)),prev=i>=0?a[i]:null;
+  if(txBuf)txBuf.push(prev?{op:'put',c,obj:prev}:{op:'del',c,id:obj.id});
+  if(i>=0)a[i]=obj;else a.push(obj);
+  MODE==='shared'?dbWrite(c+'/'+obj.id,obj):saveLocal()}
+function del(c,id){const a=S[c],i=a.findIndex(x=>String(x.id)===String(id));if(i<0)return;const prev=a[i];if(txBuf)txBuf.push({op:'put',c,obj:prev});a.splice(i,1);MODE==='shared'?dbWrite(c+'/'+id,null):saveLocal()}
+function setMeta(m){if(txBuf)txBuf.push({op:'meta',obj:S.meta});S.meta=m;MODE==='shared'?dbWrite('meta/project',m):saveLocal()}
+const upd=(c,id,patch)=>{const o=get(c,id);if(o)put(c,{...o,...patch})};
+const setCal=p=>setMeta({...S.meta,cal:{...S.meta.cal,...p}});
+function tx(fn,defer){const outer=txBuf;txBuf=[];try{fn()}finally{const b=txBuf;txBuf=outer;if(b.length&&role().r==='mgr'){hist.push(b);if(hist.length>60)hist.shift()}}defer?setTimeout(render,0):render()}
+function undo(){const b=hist.pop();if(!b)return;for(const x of b.slice().reverse()){x.op==='put'?put(x.c,x.obj):x.op==='del'?del(x.c,x.id):setMeta(x.obj)}render();toast('הפעולה בוטלה.')}
+function replaceAll(ns){tx(()=>{for(const c of COLLS){for(const o of S[c].slice())del(c,o.id);for(const o of ns[c])put(c,o)}setMeta(ns.meta)})}
+const nid=a=>a.reduce((m,x)=>Math.max(m,+x.id||0),0)+1;
+
+/* ---------- viewer ---------- */
+const member=id=>S.members.find(m=>m.id===id);
+const mname=id=>id==='mgr'?(S.meta.manager||'המנהל'):(member(id)?.name||'לא משויך');
+function role(){if(MODE==='shared'&&!isOwner){const m=S.members.find(x=>x.userId&&x.userId===myUid);return m?{r:'member',id:m.id}:{r:'claim'}}
+  if(VIEW!=='mgr'&&member(VIEW))return{r:'member',id:VIEW};return{r:'mgr'}}
+const me=()=>{const r=role();return r.r==='member'?r.id:'mgr'};
+const canPlan=()=>role().r==='mgr'&&!readOnly;
+const canTask=t=>!readOnly&&(role().r==='mgr'||(role().r==='member'&&t&&t.ownerId===role().id));
+
+/* ---------- calendar ---------- */
+let wdc=[],wset=new Set(),offset=new Set();
+function resetWD(){wdc=[];wset=new Set(WEEK[S.meta.cal.week]);offset=new Set(S.meta.cal.off)}
+const isWork=d=>wset.has(d.getDay())&&!(S.meta.cal.holidays&&HOLM.has(iso(d)))&&!offset.has(iso(d));
+function workDate(n){n=Math.max(0,n);
+  if(!wdc.length){const d=dOf(S.meta.start);let g=0;while(!isWork(d)&&g++<400)d.setDate(d.getDate()+1);wdc.push(d)}
+  while(wdc.length<=n){const d=new Date(wdc[wdc.length-1]);let g=0;do{d.setDate(d.getDate()+1)}while(!isWork(d)&&g++<400);wdc.push(d)}
+  return wdc[n]}
+function idxOf(isoD){let k=0;while(iso(workDate(k))<isoD&&k<6000)k++;return k}
+const fmtD=d=>d.toLocaleDateString('he-IL',{day:'numeric',month:'short'});
+const fmt=n=>fmtD(workDate(n));
+const fmtY=n=>workDate(n).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+const fmtIso=s=>fmtD(dOf(s));
+function holsBetween(a,b){if(!S.meta.cal.holidays)return[];const A=iso(a),B=iso(b);return HOL.filter(([d])=>d>=A&&d<=B&&wset.has(dOf(d).getDay())&&!offset.has(d))}
+
+/* ---------- scheduling ---------- */
+function cpm(ex){
+  const D=t=>Math.max(0,dur(t)+(ex&&ex.id===t.id?ex.days:0));
+  const T=S.tasks,ids=new Set(T.map(t=>t.id));
+  const deps=new Map(T.map(t=>[t.id,[...new Set((t.deps||[]).filter(d=>ids.has(d)&&d!==t.id))]]));
+  const succ=new Map(T.map(t=>[t.id,[]])),indeg=new Map(T.map(t=>[t.id,0]));
+  for(const t of T)for(const d of deps.get(t.id)){succ.get(d).push(t.id);indeg.set(t.id,indeg.get(t.id)+1)}
+  const q=T.filter(t=>!indeg.get(t.id)).map(t=>t.id),order=[];
+  while(q.length){const id=q.shift();order.push(id);for(const s of succ.get(id)){indeg.set(s,indeg.get(s)-1);if(!indeg.get(s))q.push(s)}}
+  if(order.length<T.length){const o=new Set(order);return{cycle:T.filter(t=>!o.has(t.id)).map(t=>t.id),r:new Map(),end:0,deps,order:[]}}
+  const by=new Map(T.map(t=>[t.id,t])),r=new Map();let end=0;
+  for(const id of order){const es=Math.max(0,...deps.get(id).map(d=>r.get(d).ef)),ef=es+D(by.get(id));r.set(id,{es,ef});end=Math.max(end,ef)}
+  for(const id of [...order].reverse()){const s=succ.get(id),o=r.get(id);o.lf=s.length?Math.min(...s.map(x=>r.get(x).ls)):end;o.ls=o.lf-D(by.get(id));o.slack=o.ls-o.es;o.crit=o.slack===0}
+  return{r,end,deps,cycle:null,order};
+}
+function calc(){
+  resetWD();
+  const C=cpm(),T=S.tasks,ok=T.length&&!C.cycle,tIdx=idxOf(TODAY),info=new Map();
+  let wSum=0,wDone=0,wPlan=0;
+  for(const t of T){const r=C.r.get(t.id);if(!r){info.set(t.id,{});continue}
+    const d=dur(t),done=t.status==='done',prog=done?100:t.progress;
+    const pf=d?clamp((tIdx-r.es)/d,0,1):(tIdx>=r.es?1:0);
+    const waiting=(C.deps.get(t.id)||[]).filter(x=>get('tasks',x)?.status!=='done');
+    const overdue=!done&&d>0&&tIdx>=r.ef?tIdx-r.ef+1:0;
+    const lateStart=!done&&!overdue&&t.status==='todo'&&tIdx>r.es;
+    const behind=!overdue&&t.status==='doing'&&prog+20<pf*100;
+    const dueIn=done?null:(r.ef-1)-tIdx;
+    const stale=(t.status==='doing'||t.status==='blocked')&&t.updatedAt&&Date.now()-t.updatedAt>3*DAY?Math.floor((Date.now()-t.updatedAt)/DAY):0;
+    info.set(t.id,{...r,d,prog,pf,waiting,overdue,lateStart,behind,dueIn,stale,startsNow:t.status==='todo'&&r.es===tIdx});
+    wSum+=d;wDone+=d*prog/100;wPlan+=d*pf}
+  // forecast
+  let fEnd=0;const fc=new Map();
+  if(ok){for(const id of C.order){const t=get('tasks',id),r=C.r.get(id),dm=Math.max(0,...C.deps.get(id).map(x=>fc.get(x))),d=dur(t);let ef;
+    if(t.status==='done')ef=Math.min(r.ef,tIdx);else if(t.status==='todo')ef=Math.max(r.es,tIdx,dm)+d;else ef=Math.max(tIdx,dm)+Math.ceil(d*(1-t.progress/100));
+    fc.set(id,ef);fEnd=Math.max(fEnd,ef)}}
+  const pctDone=wSum?Math.round(wDone/wSum*100):0,pctPlan=wSum?Math.round(wPlan/wSum*100):0,delay=ok?Math.max(0,fEnd-C.end):0;
+  // health
+  const I=t=>info.get(t.id)||{},drv=[];
+  const cnt=f=>T.filter(t=>f(t,I(t))).length;
+  const oc=cnt((t,i)=>i.overdue&&i.crit),on=cnt((t,i)=>i.overdue&&!i.crit),bl=cnt(t=>t.status==='blocked'),bh=cnt((t,i)=>i.behind),st=cnt((t,i)=>i.stale);
+  const openR=S.risks.filter(r=>r.status!=='Closed'),hiPath=openR.filter(r=>r.p*r.i>=15&&r.taskId!=null&&C.r.get(r.taskId)?.crit&&get('tasks',r.taskId)?.status!=='done');
+  if(oc)drv.push([`${plural(oc,'משימה קריטית','משימות קריטיות')} באיחור`,oc*12]);
+  if(delay)drv.push([`צפי לאיחור של ${plural(delay,'יום','ימים')} בסיום`,Math.min(30,delay*3)]);
+  if(bl)drv.push([plural(bl,'משימה תקועה','משימות תקועות'),bl*8]);
+  if(on)drv.push([`${plural(on,'משימה','משימות')} באיחור מחוץ לנתיב הקריטי`,on*5]);
+  if(bh)drv.push([`${plural(bh,'משימה מתקדמת','משימות מתקדמות')} לאט מהמתוכנן`,bh*4]);
+  if(st)drv.push([`${plural(st,'משימה','משימות')} בלי עדכון יותר משלושה ימים`,st*3]);
+  if(hiPath.length)drv.push([`${plural(hiPath.length,'סיכון גבוה','סיכונים גבוהים')} בנתיב הקריטי`,hiPath.length*5]);
+  const score=ok?clamp(100-drv.reduce((a,d)=>a+d[1],0),0,100):0;
+  const health={score,drivers:drv,label:score>=75?'במסלול':score>=50?'דורש תשומת לב':'בסיכון',cls:score>=75?'':score>=50?'mid':'bad'};
+  // per member stats
+  const mstat={};
+  for(const m of S.members){const mt=T.filter(t=>t.ownerId===m.id),ws=mt.reduce((a,t)=>a+dur(t),0);
+    const lastMsg=Math.max(0,...S.msgs.filter(x=>x.from===m.id).map(x=>x.at)),lastSu=Math.max(0,...S.standups.filter(s=>s.memberId===m.id).map(s=>s.at));
+    mstat[m.id]={n:mt.length,open:mt.filter(t=>t.status!=='done').length,over:mt.filter(t=>I(t).overdue).length,blocked:mt.filter(t=>t.status==='blocked').length,
+      pct:ws?Math.round(mt.reduce((a,t)=>a+dur(t)*(t.status==='done'?100:t.progress),0)/ws):0,
+      last:Math.max(0,lastMsg,lastSu,...mt.map(t=>t.updatedAt||0)),su:S.standups.some(s=>s.memberId===m.id&&s.date===TODAY)}}
+  return{C,ok,tIdx,info,pctDone,pctPlan,fEnd,delay,health,mstat,openR,hiPath};
+}
+
+/* ---------- reminders ---------- */
+const tl=t=>`#${t.id} ${t.name}`;
+function reminders(K){
+  const out=[],R=role(),I=t=>K.info.get(t.id)||{};
+  if(!K.ok)return out;
+  if(R.r==='mgr'){
+    for(const t of S.tasks){const i=I(t),own=mname(t.ownerId);
+      if(t.status==='blocked')out.push({lvl:'high',text:`${tl(t)} תקועה (${own})${t.blockReason?': '+t.blockReason:''}`,taskId:t.id,req:1});
+      else if(i.overdue)out.push({lvl:i.crit?'high':'med',text:`${tl(t)} באיחור של ${plural(i.overdue,'יום','ימים')} (${own})${i.crit?'. המשימה בנתיב הקריטי.':''}`,taskId:t.id,req:1});
+      else if(i.lateStart)out.push({lvl:'med',text:`${tl(t)} הייתה אמורה להתחיל ב־${fmt(i.es)}${i.waiting.length?' ומחכה ל־'+i.waiting.map(x=>'#'+x).join(', '):''} (${own})`,taskId:t.id,req:!i.waiting.length});
+      else if(i.behind)out.push({lvl:'med',text:`${tl(t)} מתקדמת לאט: ${i.prog}% מתוך ${Math.round(i.pf*100)}% מתוכנן (${own})`,taskId:t.id,req:1});
+      if(i.stale&&t.status!=='blocked')out.push({lvl:'med',text:`${tl(t)} לא עודכנה ${plural(i.stale,'יום','ימים')} (${own})`,taskId:t.id,req:1})}
+    for(const f of S.followups)if(!f.done&&f.due<=TODAY)out.push({lvl:f.due<TODAY?'high':'med',text:`מעקב${f.due<TODAY?' שעבר מועדו':' להיום'}: ${f.text}`,taskId:f.taskId,fu:f.id});
+    for(const s of S.standups)if(s.b&&s.date>=iso(addDays(today0(),-3)))out.push({lvl:'high',text:`חסם מהעדכון היומי של ${mname(s.memberId)}: ${s.b}`,memberId:s.memberId});
+    for(const r of K.hiPath)out.push({lvl:'med',text:`סיכון גבוה בנתיב הקריטי: ${r.title}`,taskId:r.taskId});
+  }else if(R.r==='member'){
+    for(const t of S.tasks.filter(x=>x.ownerId===R.id)){const i=I(t);
+      if(i.overdue)out.push({lvl:'high',text:`${tl(t)} באיחור של ${plural(i.overdue,'יום','ימים')}. עדכנו את המנהל מה צריך כדי לסגור.`,taskId:t.id});
+      else if(i.dueIn===0)out.push({lvl:'high',text:`${tl(t)} צריכה להסתיים היום.`,taskId:t.id});
+      else if(i.dueIn===1)out.push({lvl:'med',text:`${tl(t)} צריכה להסתיים מחר.`,taskId:t.id});
+      if((i.lateStart||i.startsNow)&&!i.waiting.length)out.push({lvl:'med',text:`הגיע הזמן להתחיל את ${tl(t)}.`,taskId:t.id});
+      if(i.stale)out.push({lvl:'med',text:`לא עדכנת את ${tl(t)} כבר ${plural(i.stale,'יום','ימים')}.`,taskId:t.id})}
+    if(wset.has(today0().getDay())&&!S.standups.some(s=>s.memberId===R.id&&s.date===TODAY))out.push({lvl:'med',text:'עוד לא מילאת את העדכון היומי.',go:'standup'});
+  }
+  const rank={high:0,med:1};return out.sort((a,b)=>rank[a.lvl]-rank[b.lvl]);
+}
+const unreadFor=id=>S.msgs.filter(x=>x.to===id&&!x.read);
+
+/* ---------- small renderers ---------- */
+const av=(id,cls='')=>{const m=member(id),n=id==='mgr'?(S.meta.manager||'מ'):(m?.name||'?');return `<span class="av ${cls}" style="background:${id==='mgr'?'var(--ink)':m?.color||'#888'}" aria-hidden="true">${esc(n.trim().charAt(0)||'?')}</span>`};
+const mopts=(sel,none='לא משויך')=>`<option value="">${none}</option>`+S.members.map(m=>`<option value="${m.id}"${m.id===sel?' selected':''}>${esc(m.name)}</option>`).join('');
+const topts=(sel,list=S.tasks,none='ללא')=>`<option value="">${none}</option>`+list.map(t=>`<option value="${t.id}"${t.id===sel?' selected':''}>#${t.id} ${esc(t.name)}</option>`).join('');
+function dueChip(t,i){if(t.status==='done')return '<span class="chip ok">הושלם</span>';if(!i||i.es==null)return '';
+  if(i.overdue)return `<span class="chip bad">באיחור ${plural(i.overdue,'יום','ימים')}</span>`;
+  if(i.dueIn===0)return '<span class="chip warn">להיום</span>';if(i.dueIn===1)return '<span class="chip warn">למחר</span>';
+  if(t.status==='todo'&&i.waiting.length)return `<span class="chip">מחכה ל־${i.waiting.map(x=>'#'+x).join(', ')}</span>`;
+  return `<span class="chip">עד ${fmt(lastDay(i.es,i.ef))}</span>`}
+function calLink(t,i){if(!i||i.es==null)return '#';const d=workDate(lastDay(i.es,i.ef)),f=x=>iso(x).replace(/-/g,'');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('דדליין: '+t.name)}&dates=${f(d)}/${f(addDays(d,1))}&details=${encodeURIComponent('משימה #'+t.id+' בפרויקט '+S.meta.name)}`}
+function msgRow(x,K){const R=me(),mine=x.from===R,toMe=x.to===R,t=x.taskId!=null?get('tasks',x.taskId):null;
+  return `<li class="${toMe&&!x.read?'un':''}"><div class="mt">${av(x.from,'sm')}<b>${esc(mname(x.from))}</b><span class="note">אל ${esc(x.to==='all'?'כל הצוות':mname(x.to))}</span><span class="chip ${x.kind==='blocked'?'bad':x.kind==='req'?'warn':''}">${KIND[x.kind]}</span>${t?`<button class="linkb" data-open="${t.id}">${esc(tl(t))}</button>`:''}<span class="note">${ago(x.at)}</span>${mine?`<span class="note">${x.read?'נקרא':'טרם נקרא'}</span>`:''}</div>
+   <div class="mtx">${esc(x.text)}</div>
+   ${toMe&&!readOnly?`<div class="row" style="margin-top:0">${!x.read?`<button class="btn sm" data-read="${x.id}">סימון כנקרא</button>`:''}${x.kind==='req'&&t?`<button class="btn sm p" data-open="${t.id}">עדכון המשימה</button>`:''}<details><summary>תגובה</summary><div class="row"><textarea id="rp-${x.id}" aria-label="תגובה"></textarea><button class="btn sm p" data-reply="${x.id}">שליחת תגובה</button></div></details></div>`:''}</li>`}
+function sendMsg(to,kind,text,taskId){const ids=to==='all'?S.members.map(m=>m.id):[to];
+  for(const id of ids)put('msgs',{id:uid(),from:me(),to:id,taskId:taskId??null,kind,text,at:Date.now(),read:false})}
+
+/* ---------- header ---------- */
+function renderHeader(K){
+  const R=role(),mgr=R.r==='mgr';
+  $('#pname').hidden=!canPlan();$('#pnameRO').hidden=canPlan();$('#pname').value=S.meta.name;$('#pnameRO').textContent=S.meta.name;
+  const showAs=MODE==='local'||isOwner;$('#asWrap').hidden=!showAs;$('#asLbl').textContent=MODE==='local'?'צפייה בתור':'תצוגה מקדימה בתור';
+  $('#as').innerHTML=`<option value="mgr">${esc(S.meta.manager||'מנהל')} (מנהל)</option>`+S.members.map(m=>`<option value="${m.id}">${esc(m.name)} (${esc(m.title||'צוות')})</option>`).join('');
+  $('#as').value=R.r==='member'?R.id:'mgr';
+  $('#undo').hidden=!mgr;$('#undo').disabled=!hist.length;
+  const rem=reminders(K),un=unreadFor(me()).length;$('#badge').textContent=R.r==='claim'?'':(rem.length+un||'');
+  let h='',sub='',k=[];
+  if(R.r==='claim'){h='ברוכים הבאים לפרויקט';sub='בחרו מי אתם בצוות כדי לראות את הלוח האישי שלכם.'}
+  else if(!S.tasks.length){h=mgr?'בונים את התוכנית':'עוד אין משימות בפרויקט';sub=mgr?'התחילו מתבנית או הוסיפו משימות בלשונית התוכנית.':'המנהל עוד לא הוסיף משימות.'}
+  else if(K.C.cycle){h='יש בתוכנית תלות מעגלית';sub='המשימות '+K.C.cycle.map(i=>'#'+i).join(', ')+' תלויות זו בזו. תקנו את עמודת ״תלויה ב״ בלשונית התוכנית.'}
+  else if(mgr){const H=K.health;
+    h=`הפרויקט ${H.label}: ${K.pctDone}% הושלמו מול ${K.pctPlan}% מתוכנן`;
+    sub=(K.delay?`<b>צפי לסיום ב־${fmtY(lastDay(0,K.fEnd))}, ${plural(K.delay,'יום','ימים')} אחרי התוכנית.</b>`:`צפי לסיום ב־${fmtY(lastDay(0,K.C.end))} לפי התוכנית.`)+(rem.length?` ${plural(rem.length,'נושא אחד דורש','נושאים דורשים')} טיפול.`:' אין נושאים פתוחים שדורשים טיפול.');
+    const over=S.tasks.filter(t=>K.info.get(t.id)?.overdue).length,bl=S.tasks.filter(t=>t.status==='blocked').length;
+    k=[['בריאות הפרויקט',H.score,H.label,H.cls||'good'],['התקדמות',K.pctDone+'%',`מתוכנן ${K.pctPlan}%`,K.pctDone+10<K.pctPlan],['צפי סיום',fmt(lastDay(0,K.fEnd)),K.delay?`איחור של ${plural(K.delay,'יום','ימים')}`:'לפי התוכנית',K.delay>0],['באיחור',over,`${plural(bl,'משימה תקועה','משימות תקועות')}`,over>0]]}
+  else{const mt=S.tasks.filter(t=>t.ownerId===R.id),open=mt.filter(t=>t.status!=='done'),over=mt.filter(t=>K.info.get(t.id)?.overdue).length,st=K.mstat[R.id]||{pct:0};
+    const next=open.map(t=>[t,K.info.get(t.id)]).filter(x=>x[1]&&x[1].dueIn!=null).sort((a,b)=>a[1].dueIn-b[1].dueIn)[0];
+    h=`שלום ${mname(R.id)}, ${open.length?`יש לך ${plural(open.length,'משימה פתוחה','משימות פתוחות')}`:'אין לך משימות פתוחות'}`;
+    sub=over?`<b>${plural(over,'משימה באיחור','משימות באיחור')}.</b> כדאי לעדכן את ${esc(S.meta.manager)} מה מעכב.`:next?`הדדליין הקרוב: ${esc(next[0].name)}, עד ${fmt(lastDay(next[1].es,next[1].ef))}.`:'כל הכבוד, הכול מעודכן.';
+    k=[['משימות פתוחות',open.length,`מתוך ${mt.length}`],['באיחור',over,'',over>0],['ההתקדמות שלי',st.pct+'%',''],['הודעות חדשות',unreadFor(R.id).length,'']]}
+  const dm=$('#demo');dm.hidden=MODE!=='local';if(MODE==='local')dm.innerHTML=R.r==='member'?`<b>מצב הדגמה</b> אתם צופים כרגע בלוח של ${esc(mname(R.id))}. כדי לחזור לתצוגת המנהל, בחרו ב${esc(S.meta.manager)} בתפריט ״צפייה בתור״.`:`<b>מצב הדגמה</b> אתם צופים בפרויקט בתור ${esc(S.meta.manager)}, מנהל הפרויקט. בתפריט ״צפייה בתור״ אפשר לראות גם את הלוח של כל עובד.`;
+  $('#h1').textContent=h;$('#sub').innerHTML=sub;
+  $('#kpis').innerHTML=k.map(([a,b,c,bad])=>`<div class="k"><span>${a}</span><b class="${bad===true?'bad':bad||''}">${b}</b>${c?`<small>${c}</small>`:''}</div>`).join('');
+  const tabs=R.r==='claim'?[]:mgr?[['dash','תמונת מצב'],['team','צוות'],['plan','תוכנית ולוח זמנים'],['risks','סיכונים'],['msgs','הודעות'],['settings','הגדרות']]:[['board','הלוח שלי'],['standup','עדכון יומי'],['msgs','הודעות'],['plan','לוח זמנים']];
+  if(!tabs.some(x=>x[0]===tab))tab=tabs[0]?.[0]||null;
+  const unM=unreadFor(me()).length;
+  $('#tabs').innerHTML=tabs.map(([v,l])=>`<button data-tab="${v}"${v===tab?' aria-current="page"':''}>${l}${v==='msgs'&&unM?` <span class="badge">${unM}</span>`:''}</button>`).join('');
+}
+
+/* ---------- views: manager ---------- */
+function alertsList(al,max=8){if(!al.length)return '<p class="note">אין כרגע נושאים פתוחים. הכול במסלול.</p>';
+  return `<ul class="al">${al.slice(0,max).map(a=>{const t=a.taskId!=null?get('tasks',a.taskId):null,txt=t?`היי ${mname(t.ownerId)}, אפשר עדכון קצר על ״${t.name}״?`:'';
+   return `<li class="${a.lvl}"><div><span class="lv"></span>${esc(a.text)}</div><div class="row">${t?`<button class="btn sm" data-open="${t.id}">פתיחה</button>`:''}${a.req&&t&&t.ownerId&&!readOnly?`<button class="btn sm" data-req="${t.id}">בקשת עדכון</button><a class="btn sm" href="${wa(txt)}" target="_blank" rel="noopener">וואטסאפ</a>`:''}${a.fu&&!readOnly?`<button class="btn sm" data-fudone="${a.fu}">סימון כבוצע</button>`:''}${a.go?`<button class="btn sm" data-tab="${a.go}">מילוי עכשיו</button>`:''}${a.memberId&&!t?`<button class="btn sm" data-member="${a.memberId}">ללוח של ${esc(mname(a.memberId))}</button>`:''}</div></li>`}).join('')}</ul>${al.length>max?`<p class="note">ועוד ${al.length-max} נושאים. כולם מופיעים בהתראות.</p>`:''}`}
+function memberCard(m,K){const s=K.mstat[m.id]||{};
+  return `<button class="mc" data-member="${m.id}"><div class="mh">${av(m.id)}<div><b>${esc(m.name)}</b><div class="note">${esc(m.title)}</div></div></div>
+   <div><div class="pbar"><i class="${s.over?'bad':''}" style="width:${s.pct||0}%"></i></div></div>
+   <div class="ms"><span>התקדמות ${s.pct||0}%</span><span>${plural(s.open||0,'משימה פתוחה','משימות פתוחות')}</span>${s.over?`<b>${s.over} באיחור</b>`:''}${s.blocked?`<b>${s.blocked} תקועות</b>`:''}</div>
+   <div class="ms"><span>עדכון אחרון ${ago(s.last)}</span>${s.su?'<span class="chip ok">מילא עדכון יומי</span>':''}</div></button>`}
+function heat(K){if(!K.ok||!S.members.length)return '<p class="note">אין מספיק נתונים.</p>';
+  const end=K.C.end,B=Math.ceil(end/5),cur=Math.floor(K.tIdx/5);
+  const cols=[...Array(B).keys()];
+  const load=(mid,b)=>{const a=b*5,z=Math.min(end,a+5);let days=0;for(const t of S.tasks)if(t.ownerId===mid){const r=K.C.r.get(t.id);if(r)days+=Math.max(0,Math.min(r.ef,z)-Math.max(r.es,a))}return Math.round(days/(z-a)*100)};
+  return `<div class="scroll"><table class="heat"><thead><tr><th></th>${cols.map(b=>`<th>${fmt(b*5)}</th>`).join('')}</tr></thead><tbody>${S.members.map(m=>`<tr><th style="text-align:start">${esc(m.name)}</th>${cols.map(b=>{const l=load(m.id,b),c=l===0?'l0':l<=50?'l1':l<=100?'l2':'l3';return `<td><span class="c ${c}${b===cur?' now':''}" title="${esc(m.name)}: ${l}% עומס בשבוע של ${fmt(b*5)}">${l?l+'%':''}</span></td>`}).join('')}</tr>`).join('')}</tbody></table></div>
+  <p class="note" style="margin-bottom:0">אחוז מימי העבודה בשבוע שמוקצים למשימות. מעל 100% (בוורוד) אומר שהעובד מחזיק כמה משימות במקביל. המסגרת מסמנת את השבוע הנוכחי.</p>`}
+function followupsBox(){const L=S.followups.slice().sort((a,b)=>a.done-b.done||a.due.localeCompare(b.due));
+  return `<ul class="fl-l">${L.map(f=>{const t=f.taskId!=null?get('tasks',f.taskId):null;return `<li class="${!f.done&&f.due<=TODAY?'due':''}"><input type="checkbox" data-fu="${f.id}"${f.done?' checked':''} aria-label="בוצע"${readOnly?' disabled':''}><div class="grow"><div style="${f.done?'text-decoration:line-through;opacity:.6':''}">${esc(f.text)}</div><div class="note">${f.due===TODAY?'היום':fmtIso(f.due)}${f.memberId?' · '+esc(mname(f.memberId)):''}${t?' · #'+t.id:''}</div></div>${readOnly?'':`<button class="x" data-fudel="${f.id}" aria-label="מחיקת מעקב">×</button>`}</li>`}).join('')||'<li class="note">אין מעקבים. הוסיפו תזכורת לעצמכם.</li>'}</ul>
+  ${readOnly?'':`<div class="row"><input id="fuT" placeholder="למשל: לבדוק עם עומר את הסליקה" aria-label="תזכורת"><input id="fuD" type="date" value="${iso(addDays(today0(),1))}" style="width:auto" aria-label="תאריך"><select id="fuM" style="width:auto" aria-label="איש צוות">${mopts('',"ללא איש צוות")}</select><button class="btn p" data-act="fuAdd">הוספה</button></div>`}`}
+function activity(){const it=[...S.msgs.map(x=>({at:x.at,who:x.from,txt:`${KIND[x.kind]}${x.taskId!=null?' ב־#'+x.taskId:''}${x.from==='mgr'?' אל '+mname(x.to):''}`,q:x.text})),...S.standups.map(s=>({at:s.at,who:s.memberId,txt:'מילא עדכון יומי',q:s.t?'היום: '+s.t:''}))].sort((a,b)=>b.at-a.at).slice(0,8);
+  return `<ul class="act">${it.map(a=>`<li>${av(a.who,'sm')}<div class="t"><b>${esc(mname(a.who))}</b> ${esc(a.txt)} <span class="note">· ${ago(a.at)}</span>${a.q?`<q>${esc(a.q.length>90?a.q.slice(0,90)+'…':a.q)}</q>`:''}</div></li>`).join('')||'<li class="note">עוד אין פעילות.</li>'}</ul>`}
+function vDash(K){if(MODE==='shared'&&!loaded)return '<p class="note">טוען את הפרויקט…</p>';if(!S.tasks.length&&!S.members.length)return onboarding();
+  const H=K.health,rem=reminders(K);
+  return `<div class="g2">
+   <div class="card"><h3>בריאות הפרויקט</h3><div class="hs"><b class="hsn ${H.cls}">${K.ok?H.score:'–'}</b><div><div class="hl1">${K.ok?H.label:'אין עדיין נתונים'}</div><div class="note">${H.drivers.length?'מה מוריד את הציון:':'אין גורמים שמורידים את הציון.'}</div></div></div>
+    <ul class="drv">${H.drivers.map(d=>`<li><span>${d[0]}</span><span>−${d[1]}</span></li>`).join('')}</ul>
+    <div class="cmpb"><div><span>בפועל</span><div class="pbar"><i style="width:${K.pctDone}%"></i></div><span>${K.pctDone}%</span></div><div><span>מתוכנן</span><div class="pbar"><i class="pl" style="width:${K.pctPlan}%"></i></div><span>${K.pctPlan}%</span></div></div>
+    <p class="note" style="margin-bottom:0">הצפי מחושב מחדש בכל עדכון לפי ההתקדמות בפועל של כל משימה.</p></div>
+   <div class="card"><div class="ch"><h3>דורש טיפול</h3><span class="note">${plural(rem.length,'נושא אחד','נושאים')}</span></div>${alertsList(rem)}</div></div>
+  <div class="head"><h2>הצוות</h2><div class="row" style="margin:0"><button class="btn" data-act="report">דוח סטטוס שבועי</button><button class="btn" data-ask="מה הדבר הכי חשוב שאני צריך לטפל בו היום כמנהל הפרויקט?">מה לעשות היום?</button></div></div>
+  <div class="team">${S.members.map(m=>memberCard(m,K)).join('')||'<p class="note">עוד לא הוגדר צוות. הוסיפו אנשי צוות בלשונית ההגדרות.</p>'}</div>
+  <div class="card" style="margin-top:16px"><h3>עומס עבודה לפי שבוע</h3>${heat(K)}</div>
+  <div class="g3"><div class="card"><h3>המעקבים שלי</h3>${followupsBox()}</div><div class="card"><h3>פעילות אחרונה</h3>${activity()}</div></div>`}
+function onboarding(){return `<div class="card" style="max-width:720px"><h2>בואו נתחיל</h2><p>הפרויקט ריק. אפשר לטעון פרויקט לדוגמה כדי לראות איך הכול עובד, או להתחיל מתבנית ולבחור רק את המשימות שצריך.</p>
+  ${readOnly?'<p class="note">אין לך הרשאת עריכה בפרויקט הזה.</p>':`<div class="row"><button class="btn p" data-act="sample">טעינת פרויקט לדוגמה</button><button class="btn" data-act="tpl">התחלה מתבנית</button></div>`}
+  ${MODE==='shared'?'<p class="note">כל מה שתיצרו יישמר במאגר המשותף, וכל מי שתשתפו איתו את הדף יראה את אותו פרויקט.</p>':''}</div>`}
+function boardHTML(mid,K){const mt=S.tasks.filter(t=>t.ownerId===mid);
+  return `<div class="board">${Object.keys(TS).map(s=>{const L=mt.filter(t=>t.status===s).sort((a,b)=>(K.info.get(a.id)?.es??0)-(K.info.get(b.id)?.es??0));
+   return `<div class="col"><h3>${TS[s]}<span>${L.length}</span></h3>${L.map(t=>{const i=K.info.get(t.id)||{},un=S.msgs.filter(x=>x.taskId===t.id&&x.to===me()&&!x.read).length;
+     return `<button class="kc" data-open="${t.id}"><div class="kt"><small>#${t.id}</small>${esc(t.name)}</div><div class="chips">${dueChip(t,i)}${i.crit&&t.status!=='done'?'<span class="chip crit">קריטית</span>':''}${un?`<span class="chip warn">${plural(un,'הודעה חדשה','הודעות חדשות')}</span>`:''}</div>${t.status==='blocked'&&t.blockReason?`<div class="note">${esc(t.blockReason)}</div>`:''}<div class="pbar"><i style="width:${i.prog??t.progress}%"></i></div><div class="km"><span>${i.prog??t.progress}%</span>${i.es!=null?`<span>${fmt(i.es)} – ${fmt(lastDay(i.es,i.ef))}</span>`:''}</div></button>`}).join('')||'<p class="note" style="margin:8px 4px">אין משימות</p>'}</div>`}).join('')}</div>`}
+function standupList(mid){const L=S.standups.filter(s=>s.memberId===mid).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  return L.length?`<ul class="act">${L.map(s=>`<li><div class="t"><b>${s.date===TODAY?'היום':fmtIso(s.date)}</b>${s.y?`<q>אתמול: ${esc(s.y)}</q>`:''}${s.t?`<q>היום: ${esc(s.t)}</q>`:''}${s.b?`<q style="color:var(--bad)">חסמים: ${esc(s.b)}</q>`:''}</div></li>`).join('')}</ul>`:'<p class="note">עוד אין עדכונים יומיים.</p>'}
+function composer(to,lockTo){const taskList=to&&to!=='all'?S.tasks.filter(t=>t.ownerId===to):S.tasks;const mgr=role().r==='mgr';
+  const kinds=mgr?['note','clarify','req','assign']:['note','progress','blocked'];
+  return `<div class="cmpf">${mgr&&!lockTo?`<div class="row" style="margin-top:0"><select id="cTo" aria-label="נמען"><option value="all">כל הצוות</option>${S.members.map(m=>`<option value="${m.id}"${m.id===to?' selected':''}>${esc(m.name)}</option>`).join('')}</select></div>`:`<input type="hidden" id="cTo" value="${to}">`}
+   <div class="row"><select id="cK" aria-label="סוג ההודעה" style="flex:1">${kinds.map(k=>`<option value="${k}">${KIND[k]}</option>`).join('')}</select><select id="cT" aria-label="משימה" style="flex:2">${topts(null,taskList,'כללי, בלי משימה')}</select></div>
+   <textarea id="cX" placeholder="${mgr?'כתבו הערה, חידוד או בקשה. בסוג ״משימה חדשה״ הטקסט יהפוך לשם המשימה.':'כתבו עדכון או שאלה למנהל'}" aria-label="תוכן ההודעה" style="margin-top:8px"></textarea>
+   <div class="row"><button class="btn p" data-act="send">שליחה</button><a class="btn" id="cWa" href="${wa('')}" target="_blank" rel="noopener">שליחה גם בוואטסאפ</a></div></div>`}
+function vTeam(K){const m=teamSel&&member(teamSel);
+  if(!m)return `<div class="head" style="margin-top:0"><h2>הצוות</h2><span class="note">לחצו על איש צוות כדי לפתוח את הלוח שלו.</span></div><div class="team">${S.members.map(x=>memberCard(x,K)).join('')||'<p class="note">עוד לא הוגדר צוות. הוסיפו אנשי צוות בהגדרות.</p>'}</div>`;
+  const s=K.mstat[m.id]||{},th=S.msgs.filter(x=>x.from===m.id||x.to===m.id).sort((a,b)=>b.at-a.at);
+  return `<button class="linkb" data-act="teamBack">חזרה לכל הצוות</button>
+   <div class="card" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:8px 0 16px">${av(m.id,'lg')}<div class="grow"><h2>${esc(m.name)}</h2><div class="note">${esc(m.title)} · התקדמות ${s.pct}% · ${plural(s.open,'משימה פתוחה','משימות פתוחות')}${s.over?` · ${s.over} באיחור`:''} · עדכון אחרון ${ago(s.last)}</div></div><button class="btn" data-ask="תן לי תמונת מצב קצרה על ${esc(m.name)}: מה מתקדם, מה בסיכון ומה כדאי לשאול בשיחה הבאה.">סיכום עם הקופיילוט</button></div>
+   ${boardHTML(m.id,K)}
+   <div class="g3"><div class="card"><h3>שליחת הודעה ל${esc(m.name)}</h3>${composer(m.id,true)}</div><div class="card"><h3>עדכונים יומיים</h3>${standupList(m.id)}</div></div>
+   <div class="card" style="margin-top:16px"><h3>שיחות עם ${esc(m.name)}</h3><ul class="th">${th.map(x=>msgRow(x,K)).join('')||'<li class="note">עוד אין הודעות.</li>'}</ul></div>`}
+function ganttCard(){return `<div class="card"><div class="gantt"><div class="gl" id="gl"></div><div class="gt" id="gt"><svg id="gs" aria-label="תרשים גאנט"></svg></div></div>
+  <div class="lg"><span><i style="background:var(--mag)"></i>נתיב קריטי</span><span><i style="background:var(--sea2)"></i>משימה עם מרווח</span><span><i style="background:linear-gradient(to left,rgba(0,0,0,.35) 50%,var(--sea2) 50%)"></i>החלק הכהה: ההתקדמות</span><span><i style="border-top:2px dashed var(--brown);height:0;border-radius:0"></i>מרווח</span><span><i style="background:var(--ink);width:3px"></i>היום</span><span><i style="border:2px solid var(--bad);border-radius:50%;width:10px"></i>סיכון גבוה</span></div></div>`}
+function vPlan(K){
+  if(!canPlan())return `${ganttCard()}<p class="note">לוח הזמנים של כל הצוות. רק המנהל יכול לשנות את התוכנית.</p>`;
+  const C=K.C,T=S.tasks;
+  return `${C.cycle?`<div class="card" style="background:var(--warnbg);margin-bottom:12px">יש תלות מעגלית בין המשימות ${C.cycle.map(i=>'#'+i).join(', ')}. משימה לא יכולה לחכות לעצמה.</div>`:''}
+   <div class="card wi"><div><h3>מה אם?</h3><p class="note" style="margin:0">בדקו מה יקרה לתאריך הסיום אם משימה תתעכב או תתקצר. התוכנית לא משתנה עד שתחילו את השינוי.</p>
+     <div class="row"><select id="wiT" aria-label="משימה לבדיקה">${topts(wi.id,T,'בחרו משימה')}</select><div class="stp"><button data-act="wiM" aria-label="פחות יום">−</button><input id="wiD" type="number" inputmode="numeric" value="${wi.days}" aria-label="מספר ימים"><button data-act="wiP" aria-label="עוד יום">+</button></div></div></div>
+     <div><div class="wir" id="wiR">${wiText(K)}</div><div class="row"><button class="btn p" data-act="wiA"${wi.id==null||!wi.days?' disabled':''}>החלה על התוכנית</button><button class="btn" data-act="wiX"${wi.id==null?' disabled':''}>איפוס</button></div></div></div>
+   ${ganttCard()}
+   <div class="head"><h2>משימות</h2><div class="row" style="margin:0"><button class="btn" data-act="tpl">התחלה מתבנית</button><button class="btn warn" data-act="delSel"${sel.size?'':' disabled'}>מחיקת המסומנות${sel.size?` (${sel.size})`:''}</button><button class="btn p" data-act="addT">הוספת משימה</button></div></div>
+   <p class="note">לא כל משימה מתאימה לכל פרויקט: סמנו את מה שלא צריך ומחקו. משימות שהיו תלויות במשימה שנמחקה יעברו לחכות למשימות שלפניה. המשך נמדד בימי עבודה.</p>
+   <table class="stack"><thead><tr><th class="w-c"><input type="checkbox" id="selAll" aria-label="סימון הכול"${T.length&&sel.size===T.length?' checked':''}></th><th class="w-id">#</th><th>משימה</th><th class="w-d">ימים</th><th>תלויה ב</th><th class="w-o">אחראי</th><th>סטטוס</th><th class="n">התחלה</th><th class="n">סיום</th><th class="n">מרווח</th><th></th></tr></thead><tbody>
+   ${T.length?T.map(t=>{const i=K.info.get(t.id)||{};return `<tr><td><input type="checkbox" data-sel="${t.id}"${sel.has(t.id)?' checked':''} aria-label="סימון משימה ${t.id}"></td><td class="n">${t.id}</td>
+    <td><input id="t${t.id}-name" data-t="${t.id}" data-f="name" value="${esc(t.name)}" aria-label="שם המשימה"></td>
+    <td><input id="t${t.id}-dur" data-t="${t.id}" data-f="dur" type="number" min="0" inputmode="numeric" value="${dur(t)}" aria-label="משך בימי עבודה"></td>
+    <td><input id="t${t.id}-deps" data-t="${t.id}" data-f="deps" dir="ltr" style="text-align:right" value="${esc((C.deps.get(t.id)||[]).join(', '))}" placeholder="אין" aria-label="תלויה במשימות"></td>
+    <td><select id="t${t.id}-own" data-t="${t.id}" data-f="ownerId" aria-label="אחראי">${mopts(t.ownerId)}</select></td>
+    <td><button class="linkb" data-open="${t.id}">${TS[t.status]}${t.status!=='done'&&t.progress?` ${t.progress}%`:''}</button></td>
+    <td class="n">${i.es!=null?fmt(i.es):'–'}</td><td class="n">${i.es!=null?fmt(lastDay(i.es,i.ef)):'–'}</td><td class="n">${i.es==null?'–':i.crit?'<span class="cp">קריטית</span>':i.slack+' ימים'}</td>
+    <td><button class="x" data-dt="${t.id}" aria-label="מחיקת משימה ${t.id}">×</button></td></tr>`}).join(''):'<tr><td colspan="11" class="empty">עוד אין משימות. הוסיפו משימה או התחילו מתבנית.</td></tr>'}</tbody></table>`}
+function wiText(K){if(K.C.cycle)return 'יש לתקן את התלות המעגלית לפני שבודקים תרחישים.';
+  if(wi.id==null||!get('tasks',wi.id))return '<span class="note">בחרו משימה ומספר ימים, והתוצאה תופיע כאן ובתרשים.</span>';
+  const t=get('tasks',wi.id),c0=K.C.r.get(t.id),CS=K.CS,delta=CS.end-K.C.end,d=wi.days,nm=`״${esc(t.name)}״`;
+  const act=d>0?`${nm} תתעכב ב־${d} ימים`:d<0?`${nm} תתקצר ב־${-d} ימים`:`${nm} לא תשתנה`;
+  const nc=S.tasks.filter(x=>CS.r.get(x.id)?.crit&&!K.C.r.get(x.id)?.crit).length;
+  let o=`אם ${act}:<br>`;
+  if(delta>0)o+=`<b class="up">הסיום יידחה ב־${delta} ימי עבודה</b> ויהיה ב־${fmtY(lastDay(0,CS.end))}.`+(c0.slack>0?` המרווח של המשימה (${c0.slack} ימים) לא מספיק.`:'');
+  else if(delta<0)o+=`<b>הסיום יוקדם ב־${-delta} ימי עבודה</b> ויהיה ב־${fmtY(lastDay(0,CS.end))}.`+(-delta<-d?' משימות אחרות בנתיב הקריטי מגבילות את החיסכון.':'');
+  else o+='<b>תאריך הסיום לא משתנה.</b>'+(d>0?` המרווח של המשימה (${c0.slack} ימים) בולע את העיכוב.`:d<0&&!c0.crit?' המשימה לא בנתיב הקריטי, ולכן הקיצור לא מקדם את הסיום.':'');
+  if(nc)o+=nc===1?' משימה נוספת הופכת לקריטית.':` ${nc} משימות נוספות הופכות לקריטיות.`;
+  return o}
+function vRisks(K){const T=S.tasks,R=S.risks,isCrit=id=>!!K.C.r.get(id)?.crit,open=R.filter(r=>r.status!=='Closed'),ed=!readOnly;
+  let mx=`<div class="ax" style="grid-column:1/-1;text-align:start">השפעה ↑</div>`;
+  for(let i=5;i>=1;i--){mx+=`<div class="ax">${i}</div>`;for(let p=1;p<=5;p++){const n=open.filter(r=>r.p===p&&r.i===i).length,s=rfilter&&rfilter.p===p&&rfilter.i===i;mx+=`<button class="${lvl(p*i)}${n?'':' z'}${s?' sel':''}" data-p="${p}" data-i="${i}" aria-label="הסתברות ${p}, השפעה ${i}: ${n} סיכונים פתוחים">${n||'·'}</button>`}}
+  mx+=`<div></div>`+[1,2,3,4,5].map(p=>`<div class="ax">${p}</div>`).join('');
+  const sl=(id,f,val,list,lab)=>`<select id="r${id}-${f}" data-r="${id}" data-f="${f}" aria-label="${lab}">${list.map(([v,x])=>`<option value="${v}"${String(v)===String(val)?' selected':''}>${x}</option>`).join('')}</select>`;
+  const n15=[1,2,3,4,5].map(v=>[v,v]);
+  const rows=R.filter(r=>!rfilter||(r.p===rfilter.p&&r.i===rfilter.i&&r.status!=='Closed')).sort((a,b)=>(a.status==='Closed')-(b.status==='Closed')||b.p*b.i-a.p*a.i);
+  return `<div class="rgrid"><div class="card"><h3>מטריצת סיכונים</h3><p class="note" style="margin-top:0">סיכונים פתוחים לפי הסתברות והשפעה. לחיצה על תא מסננת את הרשימה.</p><div class="mx">${mx}</div><div class="ax" style="margin-top:6px">הסתברות ←</div></div>
+   <div class="card"><h3>תרגיל פרה־מורטם</h3><p class="note" style="margin-top:0">דמיינו שעבר שבוע מתאריך היעד והפרויקט נכשל. למה? כתבו כל סיבה בשורה נפרדת.</p><textarea id="pm" placeholder="ספק התשלומים שינה את הממשק שלו שבועיים לפני ההשקה"></textarea><div class="row"><button class="btn p" data-act="pmAdd">הוספה כסיכונים</button><button class="btn" data-ask="על סמך התוכנית והצוות, אילו סיכונים חסרים לנו ברשימה? תן 5 רעיונות קצרים עם הסתברות והשפעה.">רעיונות מהקופיילוט</button></div></div></div>
+   <div class="head"><h2>רשימת סיכונים</h2><div class="row" style="margin:0">${rfilter?`<span class="note">מוצג: הסתברות ${rfilter.p} × השפעה ${rfilter.i}</span><button class="linkb" data-act="rfClear">הצגת הכול</button>`:''}<button class="btn p" data-act="addR">הוספת סיכון</button></div></div>
+   <p class="note">ציון = הסתברות × השפעה. ציון 15 ומעלה נחשב גבוה. סיכון שמקושר למשימה קריטית מסומן, כי עיכוב שם מזיז את תאריך הסיום.</p>
+   <table class="stack"><thead><tr><th>ציון</th><th>סיכון</th><th class="w-s">הסתברות</th><th class="w-s">השפעה</th><th class="w-l">משימה מקושרת</th><th class="w-o">אחראי</th><th>תוכנית מענה</th><th class="w-st">סטטוס</th><th></th></tr></thead><tbody>
+   ${rows.length?rows.map(r=>{const s=r.p*r.i;return `<tr><td><span class="sc ${lvl(s)}">${s}</span>${r.status!=='Closed'&&r.taskId!=null&&isCrit(r.taskId)?'<span class="onp">בנתיב הקריטי</span>':''}</td>
+    <td><input id="r${r.id}-title" data-r="${r.id}" data-f="title" value="${esc(r.title)}" aria-label="סיכון"></td><td>${sl(r.id,'p',r.p,n15,'הסתברות')}</td><td>${sl(r.id,'i',r.i,n15,'השפעה')}</td>
+    <td><select id="r${r.id}-taskId" data-r="${r.id}" data-f="taskId" aria-label="משימה מקושרת">${topts(r.taskId)}</select></td><td><select id="r${r.id}-own" data-r="${r.id}" data-f="ownerId" aria-label="אחראי">${mopts(r.ownerId)}</select></td>
+    <td><input id="r${r.id}-mitigation" data-r="${r.id}" data-f="mitigation" value="${esc(r.mitigation)}" aria-label="תוכנית מענה"></td><td>${sl(r.id,'status',r.status,Object.entries(RST),'סטטוס')}</td>
+    <td>${ed?`<button class="x" data-dr="${r.id}" aria-label="מחיקת סיכון">×</button>`:''}</td></tr>`}).join(''):`<tr><td colspan="9" class="empty">${rfilter?'אין סיכונים פתוחים בתא הזה.':'עדיין אין סיכונים.'}</td></tr>`}</tbody></table>`}
+function vMsgs(K){const R=me(),mgr=role().r==='mgr';
+  let L=S.msgs.filter(x=>mgr||x.from===R||x.to===R);
+  if(mgr&&mfilter!=='all')L=L.filter(x=>x.from===mfilter||x.to===mfilter);
+  L=L.sort((a,b)=>b.at-a.at);const un=unreadFor(R).length;
+  return `<div class="g2"><div class="card"><h3>${mgr?'הודעה חדשה לצוות':'הודעה למנהל'}</h3>${readOnly?'<p class="note">אין לך הרשאה לשלוח הודעות.</p>':composer(mgr?(mfilter!=='all'?mfilter:'all'):'mgr',!mgr)}</div>
+   <div class="card"><div class="ch"><h3>${mgr?'כל ההודעות':'ההודעות שלי'}</h3>${un&&!readOnly?`<button class="linkb" data-act="readAll">סימון הכול כנקרא (${un})</button>`:''}</div>
+   ${mgr?`<div class="fchips"><button data-mf="all" aria-pressed="${mfilter==='all'}">הכול</button>${S.members.map(m=>{const n=S.msgs.filter(x=>x.from===m.id&&x.to==='mgr'&&!x.read).length;return `<button data-mf="${m.id}" aria-pressed="${mfilter===m.id}">${esc(m.name)}${n?` <span class="badge">${n}</span>`:''}</button>`}).join('')}</div>`:''}
+   <ul class="th">${L.map(x=>msgRow(x,K)).join('')||'<li class="note">אין הודעות.</li>'}</ul></div></div>`}
+function vSettings(K){const ed=!readOnly,c=S.meta.cal,offs=[...c.off].sort(),hols=K.ok?holsBetween(workDate(0),workDate(lastDay(0,Math.max(K.C.end,K.fEnd)))):[];
+  return `<div class="g3" style="margin-top:0">
+   <div class="card"><h3>פרטי הפרויקט</h3><label class="note">שם הפרויקט<input id="sName" value="${esc(S.meta.name)}"></label><label class="note">תאריך התחלה<input id="sStart" type="date" value="${S.meta.start}"></label><label class="note">שם המנהל<input id="sMgr" value="${esc(S.meta.manager)}"></label></div>
+   <div class="card"><h3>שבוע העבודה וחגים</h3><select id="week" aria-label="ימי עבודה"><option value="sun-thu"${c.week==='sun-thu'?' selected':''}>ראשון עד חמישי</option><option value="mon-fri"${c.week==='mon-fri'?' selected':''}>שני עד שישי</option><option value="all"${c.week==='all'?' selected':''}>כל ימי השבוע</option></select>
+    <label class="row" style="cursor:pointer"><input type="checkbox" id="hol"${c.holidays?' checked':''}> לדלג על חגים רשמיים (2026 ו־2027)</label>
+    <div class="note" style="margin-top:8px">חגים בתקופת הפרויקט: ${hols.length?hols.map(([d,n])=>`${n} (${fmtIso(d)})`).join(', '):'אין'}</div></div>
+   <div class="card"><h3>ימי חופש נוספים</h3><p class="note" style="margin-top:0">למשל חופשה מרוכזת או יום גיבוש. הימים האלה לא נספרים כימי עבודה.</p><div class="row" style="flex-wrap:nowrap"><input type="date" id="offD" aria-label="תאריך"><button class="btn p" data-act="offAdd">הוספה</button></div>
+    <ul class="fl-l">${offs.map(d=>`<li><span class="grow">${dOf(d).toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span><button class="x" data-off="${d}" aria-label="הסרה">×</button></li>`).join('')||'<li class="note">לא הוגדרו ימי חופש נוספים.</li>'}</ul></div></div>
+  <div class="head"><h2>הצוות</h2>${ed?'<button class="btn p" data-act="addM">הוספת איש צוות</button>':''}</div>
+  ${MODE==='shared'?'<p class="note">כדי שאיש צוות יראה את הלוח שלו, שתפו איתו את הדף בהרשאת ״Contributor״. בכניסה הראשונה הוא יבחר את השם שלו מהרשימה.</p>':'<p class="note">במצב הדגמה אפשר לעבור בין המנהל לכל איש צוות בתפריט ״צפייה בתור״ שלמעלה.</p>'}
+  <table class="stack"><thead><tr><th></th><th>שם</th><th>תפקיד</th>${MODE==='shared'?'<th>חיבור</th>':''}<th class="n">משימות</th><th></th></tr></thead><tbody>
+  ${S.members.map(m=>`<tr><td>${av(m.id,'sm')}</td><td><input id="m${m.id}-name" data-m="${m.id}" data-f="name" value="${esc(m.name)}" aria-label="שם"></td><td><input id="m${m.id}-title" data-m="${m.id}" data-f="title" value="${esc(m.title)}" aria-label="תפקיד"></td>${MODE==='shared'?`<td>${m.userId?`<span class="chip ok">מחובר</span> <button class="linkb" data-unlink="${m.id}">ניתוק</button>`:'<span class="chip">ממתין לחיבור</span>'}</td>`:''}<td class="n">${S.tasks.filter(t=>t.ownerId===m.id).length}</td><td><button class="x" data-dm="${m.id}" aria-label="הסרת ${esc(m.name)}">×</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">עוד אין אנשי צוות.</td></tr>'}</tbody></table>
+  <div class="g3"><div class="card"><h3>ייצוא</h3><textarea id="json" readonly dir="ltr" aria-label="נתוני הפרויקט">${esc(JSON.stringify(S))}</textarea><div class="row"><button class="btn p" data-act="copy">העתקת הנתונים</button><button class="btn" data-act="dl" id="dlBtn">הורדת קובץ</button></div></div>
+   <div class="card"><h3>ייבוא</h3><input type="file" id="file" accept=".json,application/json" aria-label="ייבוא מקובץ"><textarea id="imp" placeholder="…או הדביקו כאן נתונים שייצאתם" style="margin-top:8px"></textarea><div class="row"><button class="btn p" data-act="imp">ייבוא</button></div></div>
+   <div class="card"><h3>התחלה מחדש</h3><p class="note" style="margin-top:0">טעינת הפרויקט לדוגמה או מחיקת הכול. אפשר לבטל אחר כך.</p><div class="row"><button class="btn" data-act="sample">טעינת פרויקט לדוגמה</button><button class="btn" data-act="tpl">התחלה מתבנית</button><button class="btn warn" data-act="clr">${clearArm?'לחצו שוב למחיקה':'מחיקת הכול'}</button></div>
+    <p class="note">${MODE==='shared'?'מצב צוות: הנתונים נשמרים במאגר משותף שכל מי ששותף בדף רואה.':'מצב הדגמה: הנתונים נשמרים רק בדפדפן הזה.'}</p></div></div>`}
+
+/* ---------- views: member ---------- */
+function vBoard(K){const R=role(),rem=reminders(K);
+  return `${rem.length?`<div class="card" style="margin-bottom:16px"><div class="ch"><h3>תזכורות</h3><button class="btn sm" data-ask="על מה כדאי לי להתמקד היום? תן סדר עדיפויות קצר למשימות שלי.">על מה להתמקד היום?</button></div>${alertsList(rem,5)}</div>`:''}
+   ${boardHTML(R.id,K)}<p class="note">לחצו על משימה כדי לעדכן סטטוס, אחוז התקדמות או לשלוח עדכון למנהל.</p>`}
+function vStandup(K){const R=role(),mine=S.standups.find(s=>s.id===R.id+'_'+TODAY)||{};
+  return `<div class="g2"><div class="card"><h3>עדכון יומי · ${today0().toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}</h3><p class="note" style="margin-top:0">שלוש שאלות קצרות במקום ישיבת בוקר. המנהל רואה את התשובות מיד, וחסם שתכתבו יופיע אצלו כהתראה.</p>
+   <label class="note">מה עשיתי אתמול?<textarea id="suY">${esc(mine.y||'')}</textarea></label><label class="note">מה אעשה היום?<textarea id="suT">${esc(mine.t||'')}</textarea></label><label class="note">מה חוסם אותי?<textarea id="suB" placeholder="השאירו ריק אם אין חסמים">${esc(mine.b||'')}</textarea></label>
+   <div class="row"><button class="btn p" data-act="suSave">${mine.id?'עדכון':'שליחה'}</button>${mine.id?`<span class="note">נשלח ${ago(mine.at)}</span>`:''}</div></div>
+   <div class="card"><h3>העדכונים הקודמים שלי</h3>${standupList(R.id)}</div></div>`}
+function vClaim(){const free=S.members.filter(m=>!m.userId);
+  return `<div class="card" style="max-width:640px"><h2>מי אתם בצוות?</h2><p class="note">בחרו את השם שלכם פעם אחת, והלוח האישי שלכם ייפתח. אם השם לא מופיע, בקשו מהמנהל להוסיף אתכם.</p>
+   <div class="row">${free.map(m=>`<button class="btn" data-claim="${m.id}">${av(m.id,'sm')} ${esc(m.name)}${m.title?` · ${esc(m.title)}`:''}</button>`).join('')||'<span class="note">אין כרגע שמות פנויים.</span>'}</div></div>`}
+
+/* ---------- modals ---------- */
+function taskModal(K){const t=get('tasks',modal.id);if(!t){modal=null;return ''}
+  const i=K.info.get(t.id)||{},ed=canTask(t),mgr=role().r==='mgr',th=S.msgs.filter(x=>x.taskId===t.id).sort((a,b)=>b.at-a.at),rk=S.risks.filter(r=>r.taskId===t.id&&r.status!=='Closed');
+  return `<div class="mtop"><div><div class="note">משימה #${t.id} · ${av(t.ownerId||'x','sm')} ${esc(mname(t.ownerId))}</div><h2 style="margin-top:4px">${esc(t.name)}</h2><div class="chips" style="margin-top:6px">${dueChip(t,i)}${i.crit&&t.status!=='done'?'<span class="chip crit">בנתיב הקריטי</span>':''}</div></div><button class="x" data-act="close" aria-label="סגירה">×</button></div>
+   <div class="facts"><div><span>התחלה מתוכננת</span>${i.es!=null?fmt(i.es):'–'}</div><div><span>סיום מתוכנן</span>${i.es!=null?fmt(lastDay(i.es,i.ef)):'–'}</div><div><span>משך</span>${plural(dur(t),'יום עבודה','ימי עבודה')}</div><div><span>מרווח</span>${i.es==null?'–':i.crit?'אין, משימה קריטית':plural(i.slack,'יום','ימים')}</div><div><span>עדכון אחרון</span>${ago(t.updatedAt)}</div></div>
+   ${i.waiting&&i.waiting.length&&t.status!=='done'?`<p class="note">מחכה לסיום של: ${i.waiting.map(x=>esc(tl(get('tasks',x)))).join(', ')}</p>`:''}
+   <div class="sec"><h3>סטטוס והתקדמות</h3>${ed?`<div class="seg">${Object.entries(TS).map(([k,v])=>`<button data-st="${k}" aria-pressed="${t.status===k}" class="${k==='blocked'?'blk':''}">${v}</button>`).join('')}</div>
+     <div class="row"><input type="range" id="mP" min="0" max="100" step="10" value="${t.status==='done'?100:t.progress}" aria-label="אחוז התקדמות" style="flex:1"><b id="mPv" style="width:48px;text-align:end">${t.status==='done'?100:t.progress}%</b></div>
+     ${t.status==='blocked'?`<label class="note">מה חוסם?<input id="mB" value="${esc(t.blockReason)}" placeholder="למשל: מחכה לאישור מהלקוח"></label>`:''}`:`<p>${TS[t.status]} · ${t.status==='done'?100:t.progress}%${t.blockReason&&t.status==='blocked'?` · ${esc(t.blockReason)}`:''}</p>`}</div>
+   ${ed?`<div class="sec"><h3>${mgr?`הודעה ל${esc(mname(t.ownerId))}`:'עדכון למנהל'}</h3><div class="row" style="margin-top:0"><select id="mK" style="width:auto" aria-label="סוג">${(mgr?['note','clarify','req']:['progress','blocked','note']).map(k=>`<option value="${k}">${KIND[k]}</option>`).join('')}</select></div><textarea id="mX" style="margin-top:8px" placeholder="${mgr?'הערה, חידוד או בקשה לגבי המשימה':'מה התקדם? מה נשאר? צריך עזרה?'}" aria-label="תוכן"></textarea>
+     <div class="row"><button class="btn p" data-act="mSend"${!mgr||t.ownerId?'':' disabled'}>שליחה</button><a class="btn" id="mWa" href="${wa('')}" target="_blank" rel="noopener">וואטסאפ</a><a class="btn" href="${calLink(t,i)}" target="_blank" rel="noopener">הוספת הדדליין ליומן</a></div></div>`:''}
+   ${mgr&&!readOnly?`<div class="sec"><h3>תזכורת מעקב לעצמי</h3><div class="row" style="margin-top:0;flex-wrap:nowrap"><input id="mFuT" value="לבדוק את ${esc(t.name)}" aria-label="תזכורת"><input id="mFuD" type="date" value="${iso(addDays(today0(),2))}" style="width:auto" aria-label="תאריך"><button class="btn" data-act="mFu">הוספה</button></div></div>`:''}
+   ${rk.length?`<div class="sec"><h3>סיכונים פתוחים</h3>${rk.map(r=>`<div class="row" style="margin-top:4px"><span class="sc ${lvl(r.p*r.i)}">${r.p*r.i}</span> ${esc(r.title)}${r.mitigation?` <span class="note">· ${esc(r.mitigation)}</span>`:''}</div>`).join('')}</div>`:''}
+   <div class="sec"><div class="ch"><h3>שיחה על המשימה</h3><button class="btn sm" data-ask="${esc(`תן לי עצות מעשיות למשימה #${t.id} ${t.name}: מה הצעד הבא ומה עלול להשתבש?`)}">התייעצות עם הקופיילוט</button></div><ul class="th">${th.map(x=>msgRow(x,K)).join('')||'<li class="note">עוד אין הודעות על המשימה.</li>'}</ul></div>`}
+function tplModal(){const T=TPL[modal.tpl],chosen=modal.sel;
+  return `<div class="mtop"><h2>התחלה מתבנית</h2><button class="x" data-act="close" aria-label="סגירה">×</button></div>
+   <div class="fchips" style="margin:12px 0">${TPL.map((x,i)=>`<button data-tplpick="${i}" aria-pressed="${i===modal.tpl}">${x.name}</button>`).join('')}</div>
+   <p class="note">${T.desc}. הורידו את הסימון ממשימות שלא צריך בפרויקט הזה. התלויות יסתדרו לבד.</p>
+   ${T.tasks.length?`<ul class="fl-l">${T.tasks.map((x,i)=>`<li><input type="checkbox" data-tplt="${i}"${chosen.has(i)?' checked':''} id="tp${i}"><label for="tp${i}" class="grow">${esc(x[0])}</label><span class="note">${plural(x[1],'יום','ימים')}</span></li>`).join('')}</ul>`:'<p>פרויקט ריק, בלי משימות. תוכלו להוסיף אותן בלשונית התוכנית.</p>'}
+   <div class="row"><label class="row" style="margin:0;cursor:pointer"><input type="radio" name="tm" value="replace"${modal.mode==='replace'?' checked':''}> החלפת התוכנית הנוכחית</label><label class="row" style="margin:0;cursor:pointer"><input type="radio" name="tm" value="append"${modal.mode==='append'?' checked':''}> הוספה לתוכנית הקיימת</label></div>
+   <div class="row"><button class="btn p" data-act="tplGo">יצירת ${plural(T.tasks.filter((_,i)=>chosen.has(i)).length,'משימה','משימות')}</button><button class="btn" data-act="close">ביטול</button></div>`}
+function report(K){const L=[];const fin=lastDay(0,K.fEnd),w0=iso(addDays(today0(),-7));
+  L.push(`דוח סטטוס שבועי – ${S.meta.name}`,today0().toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'}),'');
+  L.push(`מצב כללי: ${K.health.label} (ציון ${K.health.score})`,`התקדמות: ${K.pctDone}% מול ${K.pctPlan}% מתוכנן`,`צפי סיום: ${fmtY(fin)}${K.delay?` (${plural(K.delay,'יום','ימים')} אחרי התוכנית)`:' (לפי התוכנית)'}`,'');
+  const done=S.tasks.filter(t=>t.status==='done'&&t.doneAt&&t.doneAt>=w0),doing=S.tasks.filter(t=>t.status==='doing'),bl=S.tasks.filter(t=>t.status==='blocked');
+  L.push('הושלם השבוע:',...(done.length?done.map(t=>`- ${t.name} (${mname(t.ownerId)})`):['- לא הושלמו משימות']),'');
+  L.push('בעבודה:',...(doing.length?doing.map(t=>`- ${t.name}: ${t.progress}% (${mname(t.ownerId)})`):['- אין']),'');
+  if(bl.length)L.push('חסמים:',...bl.map(t=>`- ${t.name}: ${t.blockReason||'לא צוין'} (${mname(t.ownerId)})`),'');
+  const hr=K.openR.filter(r=>r.p*r.i>=15);if(hr.length)L.push('סיכונים גבוהים:',...hr.map(r=>`- ${r.title}${r.mitigation?' – '+r.mitigation:''}`),'');
+  const nx=S.tasks.filter(t=>{const i=K.info.get(t.id);return t.status==='todo'&&i&&i.es!=null&&i.es>=K.tIdx&&i.es<K.tIdx+5});
+  L.push('מתחילות בשבוע הבא:',...(nx.length?nx.map(t=>`- ${t.name} (${mname(t.ownerId)})`):['- אין משימות חדשות']));
+  return L.join('\n')}
+function reportModal(K){const r=report(K);return `<div class="mtop"><h2>דוח סטטוס שבועי</h2><button class="x" data-act="close" aria-label="סגירה">×</button></div><p class="note">נוצר אוטומטית מהנתונים. אפשר לערוך לפני ששולחים.</p><textarea id="repT" style="min-height:320px">${esc(r)}</textarea>
+  <div class="row"><button class="btn p" data-act="repCopy">העתקה</button><a class="btn" href="${wa(r)}" target="_blank" rel="noopener" id="repWa">שליחה בוואטסאפ</a><button class="btn" data-ask="נסח מחדש את דוח הסטטוס השבועי בצורה מקצועית וקצרה להנהלה, עם שלוש המלצות לשבוע הבא.">ניסוח עם הקופיילוט</button></div>`}
+function renderModal(K){const box=$('#modal');if(!modal){box.innerHTML='';return}
+  const html=modal.k==='task'?taskModal(K):modal.k==='tpl'?tplModal():reportModal(K);
+  if(!modal){box.innerHTML='';return}
+  box.innerHTML=`<div class="modal" data-act="backdrop"><div class="mbox" role="dialog" aria-modal="true">${html}</div></div>`}
+function renderBell(K){const b=$('#bell');b.hidden=!bellOpen;if(!bellOpen)return;const rem=reminders(K),un=unreadFor(me());
+  b.innerHTML=`<div class="ch"><h3>התראות ותזכורות</h3><button class="x" data-act="bellClose" aria-label="סגירה">×</button></div>
+   ${un.length?`<h3 style="font-size:15px;margin-top:8px">הודעות חדשות (${un.length})</h3><ul class="al">${un.slice(0,5).map(x=>`<li><div>${av(x.from,'sm')} <b>${esc(mname(x.from))}</b> · ${KIND[x.kind]}: ${esc(x.text.length>80?x.text.slice(0,80)+'…':x.text)}</div><div class="row"><button class="btn sm" data-tab="msgs">לכל ההודעות</button>${x.taskId!=null?`<button class="btn sm" data-open="${x.taskId}">למשימה</button>`:''}<button class="btn sm" data-read="${x.id}">סימון כנקרא</button></div></li>`).join('')}</ul>`:''}
+   <h3 style="font-size:15px;margin-top:12px">תזכורות</h3>${alertsList(rem,12)}`}
+
+/* ---------- gantt ---------- */
+function drawG(){
+  const s=$('#gs'),K=lastK;if(!s||!K)return;
+  const C=K.CS,B=K.C,T=S.tasks,box=$('#gt'),H=28+T.length*34+6;box.style.height=(T.length?H:80)+'px';
+  const gl=$('#gl');if(gl)gl.innerHTML=T.map(t=>`<div class="gr${C.r.get(t.id)?.crit?' c':''}"><span class="gid">${t.id}</span><span title="${esc(t.name)}">${esc(t.name)||'ללא שם'}</span></div>`).join('');
+  const W=s.clientWidth;if(!T.length||C.cycle||!C.end||!W){s.innerHTML=T.length&&!C.cycle?'':'';return}
+  const P=12,end=Math.max(C.end,B.end||0,K.tIdx+1),x=d=>W-P-d/end*(W-2*P),idx=new Map(T.map((t,i)=>[t.id,i])),ym=i=>28+i*34+17;
+  let step=5;while(x(0)-x(step)<56&&step<end)step*=2;
+  let o=`<defs><marker id="ah" viewBox="0 0 6 6" refX="5.5" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L6 3L0 6z" style="fill:var(--soft)"/></marker><marker id="ahc" viewBox="0 0 6 6" refX="5.5" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L6 3L0 6z" style="fill:var(--mag)"/></marker></defs>`;
+  T.forEach((t,i)=>{if(i%2===0)o+=`<rect class="rowbg" x="0" y="${28+i*34}" width="${W}" height="34"/>`});
+  for(let d=0;d<end;d+=step){const X=x(d);o+=`<line class="tk" x1="${X}" x2="${X}" y1="22" y2="${H}"/>`;if(W>=300&&X>44)o+=`<text class="tl" x="${X-4}" y="15" text-anchor="end">${fmt(d)}</text>`}
+  T.forEach(t=>{const c=C.r.get(t.id),i=idx.get(t.id);(C.deps.get(t.id)||[]).forEach(d=>{const a=C.r.get(d),j=idx.get(d);
+    const x1=x(a.ef),y1=ym(j),x2=x(c.es),y2=ym(i)+(i>j?-9:9),hot=a.crit&&c.crit&&a.ef===c.es,xm=Math.min(x1-6,x2+6);
+    o+=`<path class="lk${hot?' c':''}" d="M${x1} ${y1}H${xm}V${y2}" marker-end="url(#${hot?'ahc':'ah'})"/>`})});
+  T.forEach(t=>{const c=C.r.get(t.id),i=idx.get(t.id),y=ym(i),xs=x(c.es),xe=x(c.ef),cl=c.crit?' c':'',D=dur(t)+(wi.id===t.id?wi.days:0),pr=t.status==='done'?100:t.progress;
+    const tip=`<title>#${t.id} ${esc(t.name)}: ${fmt(c.es)} עד ${fmt(lastDay(c.es,c.ef))} · ${TS[t.status]} ${pr}% · ${esc(mname(t.ownerId))}</title>`;
+    if(c.slack>0){const xf=x(c.ef+c.slack);o+=`<line class="fl" x1="${xe}" x2="${xf}" y1="${y}" y2="${y}"/><line class="fl" style="stroke-dasharray:none" x1="${xf}" x2="${xf}" y1="${y-5}" y2="${y+5}"/>`}
+    if(D<=0)o+=`<path class="b${cl}" d="M${xs} ${y-8}L${xs+8} ${y}L${xs} ${y+8}L${xs-8} ${y}z">${tip}</path>`;
+    else{const w=Math.max(3,xs-xe);o+=`<rect class="b${cl}" x="${xe}" y="${y-9}" width="${w}" height="18" rx="4">${tip}</rect>`;if(pr>0)o+=`<rect class="pg" x="${xs-w*pr/100}" y="${y-9}" width="${w*pr/100}" height="18" rx="4" pointer-events="none"/>`}
+    if(wi.id===t.id)o+=`<rect class="wib" fill="none" x="${xe-2}" y="${y-11}" width="${Math.max(3,xs-xe)+4}" height="22" rx="6"/>`;
+    if(S.risks.some(r=>r.taskId===t.id&&r.status!=='Closed'&&r.p*r.i>=15))o+=`<circle class="rk" cx="${xe-(c.slack>0?0:9)}" cy="${y-11}" r="5"><title>סיכון גבוה פתוח</title></circle>`});
+  if(B!==C&&B.end!==C.end){const X=x(B.end);o+=`<line class="bl" x1="${X}" x2="${X}" y1="22" y2="${H}"/><text class="blt" x="${X+4}" y="${H-6}">סיום מקורי</text>`}
+  if(K.tIdx<=end){const X=x(K.tIdx);o+=`<line class="td" x1="${X}" x2="${X}" y1="20" y2="${H}"/><text class="tdt" x="${X+4}" y="${H-6}">היום</text>`}
+  s.innerHTML=o;
+  if(firstDraw){box.classList.add('anim');firstDraw=false;setTimeout(()=>box.classList.remove('anim'),900)}
+}
+const gro=new ResizeObserver(()=>drawG());
+
+/* ---------- render ---------- */
+const V={dash:vDash,team:vTeam,plan:vPlan,risks:vRisks,msgs:vMsgs,settings:vSettings,board:vBoard,standup:vStandup};
+function render(){
+  const a=document.activeElement,aid=a&&a.id,sc=window.scrollY,ms=$('.mbox')?.scrollTop;
+  const K=calc();K.CS=wi.id!=null&&!K.C.cycle&&get('tasks',wi.id)?cpm(wi):K.C;lastK=K;
+  renderHeader(K);
+  const R=role();
+  $('#main').innerHTML=R.r==='claim'?vClaim():tab&&V[tab]?V[tab](K):'';
+  gro.disconnect();const gt=$('#gt');if(gt){gro.observe(gt);drawG()}
+  renderModal(K);renderBell(K);
+  const dl=$('#dlBtn');if(dl)dl.hidden=window.self!==window.top;
+  if(aid){const el=document.getElementById(aid);if(el&&el!==document.activeElement){el.focus({preventScroll:true});if(el.setSelectionRange&&/text|search/.test(el.type||'text')&&el.tagName!=='SELECT'){try{const L=el.value.length;el.setSelectionRange(L,L)}catch(e){}}}}
+  if(ms!=null&&$('.mbox'))$('.mbox').scrollTop=ms;
+  if(Math.abs(window.scrollY-sc)>2)window.scrollTo(0,sc);
+  drawChips();
+}
+let rq=false;
+function scheduleRender(){if(rq)return;rq=true;requestAnimationFrame(()=>{rq=false;const a=document.activeElement;
+  if(a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&a.type!=='checkbox'&&a.type!=='range'&&a.type!=='radio'))){pendingRender=true;return}render()})}
+document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{const a=document.activeElement;if(!(a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'))){pendingRender=false;render()}},0)});
+
+/* ---------- task mutations ---------- */
+function removeTasks(ids){const set=new Set(ids),depsOf=new Map(S.tasks.map(t=>[t.id,t.deps.slice()]));
+  const resolve=(id,seen=new Set())=>{if(!set.has(id))return[id];if(seen.has(id))return[];seen.add(id);return (depsOf.get(id)||[]).flatMap(d=>resolve(d,seen))};
+  for(const t of S.tasks.slice()){if(set.has(t.id))continue;if(t.deps.some(d=>set.has(d))){const nd=[...new Set(t.deps.flatMap(d=>resolve(d)))].filter(d=>d!==t.id);put('tasks',{...t,deps:nd})}}
+  for(const id of ids)del('tasks',id);
+  for(const r of S.risks)if(set.has(r.taskId))put('risks',{...r,taskId:null});
+  for(const id of ids)sel.delete(id);if(set.has(wi.id))wi.id=null}
+function setStatus(t,st){const p={status:st,updatedAt:Date.now()};if(st==='done'){p.progress=100;p.doneAt=TODAY}else{p.doneAt=null;if(t.status==='done'&&t.progress===100)p.progress=90}if(st==='doing'&&!t.progress)p.progress=10;if(st!=='blocked')p.blockReason='';
+  put('tasks',{...t,...p});
+  if(role().r==='member'&&(st==='blocked'||st==='done'))put('msgs',{id:uid(),from:me(),to:'mgr',taskId:t.id,kind:st==='blocked'?'blocked':'progress',text:st==='blocked'?'סימנתי את המשימה כתקועה.':'סיימתי את המשימה.',at:Date.now(),read:false})}
+function applyTemplate(){const T=TPL[modal.tpl],pick=T.tasks.map((x,i)=>i).filter(i=>modal.sel.has(i)),mode=modal.mode;
+  tx(()=>{if(mode==='replace'){for(const t of S.tasks.slice())del('tasks',t.id);for(const r of S.risks.slice())put('risks',{...r,taskId:null})}
+    const base=mode==='replace'?0:nid(S.tasks)-1,keep=new Set(pick),map=new Map();pick.forEach((i,k)=>map.set(i+1,base+k+1));
+    const resolve=(n,seen=new Set())=>{if(keep.has(n-1))return[map.get(n)];if(seen.has(n))return[];seen.add(n);return (T.tasks[n-1]?.[2]||[]).flatMap(d=>resolve(d,seen))};
+    pick.forEach(i=>{const [name,d,deps]=T.tasks[i];put('tasks',{id:map.get(i+1),name,dur:d,deps:[...new Set(deps.flatMap(x=>resolve(x)))],ownerId:null,status:'todo',progress:0,blockReason:'',updatedAt:Date.now(),doneAt:null})})});
+  modal=null;sel.clear();tab='plan';render();toast(`נוצרו ${pick.length} משימות. עכשיו שייכו אחראי לכל משימה.`)}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{const el=e.target.closest('button,a,[data-act="backdrop"]');if(!el)return;const d=el.dataset;
+  if(d.act==='backdrop'){if(e.target===el){modal=null;render()}return}
+  if(d.tab){tab=d.tab;bellOpen=false;teamSel=null;try{history.replaceState(null,'','#'+tab)}catch(err){}render();window.scrollTo(0,0);return}
+  if(d.open!=null){modal={k:'task',id:+d.open};bellOpen=false;render();return}
+  if(d.member){tab='team';teamSel=d.member;bellOpen=false;render();window.scrollTo(0,0);return}
+  if(d.ask){openCop();ask(d.ask);return}
+  if(el.id==='bellBtn'){bellOpen=!bellOpen;render();return}
+  if(el.id==='copBtn'){openCop();return}
+  if(el.id==='copClose'){$('#cop').hidden=true;return}
+  if(el.id==='undo')return undo();
+  if(d.cq){ask(d.cq);return}
+  if(d.read){upd('msgs',d.read,{read:true});render();return}
+  if(d.reply){const src=get('msgs',d.reply),ta=$('#rp-'+d.reply),txt=ta&&ta.value.trim();if(!src||!txt)return toast('כתבו תגובה קודם.');tx(()=>{put('msgs',{...src,read:true});put('msgs',{id:uid(),from:me(),to:src.from,taskId:src.taskId,kind:'reply',text:txt,at:Date.now(),read:false})});toast('התגובה נשלחה.');return}
+  if(d.req){const t=get('tasks',d.req);if(!t||!t.ownerId)return;tx(()=>put('msgs',{id:uid(),from:'mgr',to:t.ownerId,taskId:t.id,kind:'req',text:`היי ${mname(t.ownerId)}, אפשר עדכון קצר על ״${t.name}״? איפה זה עומד ומה צריך כדי לסיים?`,at:Date.now(),read:false}));toast(`בקשת עדכון נשלחה ל${mname(t.ownerId)}.`);return}
+  if(d.fudone){upd('followups',d.fudone,{done:true});render();return}
+  if(d.fudel){tx(()=>del('followups',d.fudel));return}
+  if(d.claim){upd('members',d.claim,{userId:myUid});render();toast('ברוכים הבאים! זה הלוח האישי שלכם.');return}
+  if(d.unlink){tx(()=>upd('members',d.unlink,{userId:null}));return}
+  if(d.mf){mfilter=d.mf;render();return}
+  if(d.st){const t=get('tasks',modal.id);if(t&&canTask(t)){tx(()=>setStatus(t,d.st));}return}
+  if(d.dt){tx(()=>removeTasks([+d.dt]));return}
+  if(d.dr){tx(()=>del('risks',+d.dr));return}
+  if(d.dm){const id=d.dm;tx(()=>{del('members',id);for(const t of S.tasks)if(t.ownerId===id)put('tasks',{...t,ownerId:null})});return}
+  if(d.off){const v=d.off;tx(()=>setCal({off:S.meta.cal.off.filter(x=>x!==v)}));return}
+  if(d.p&&d.i){const p=+d.p,i=+d.i;rfilter=rfilter&&rfilter.p===p&&rfilter.i===i?null:{p,i};render();return}
+  if(d.tplpick!=null){const i=+d.tplpick;modal={k:'tpl',tpl:i,sel:new Set(TPL[i].tasks.map((_,j)=>j)),mode:modal.mode};render();return}
+  const A=d.act;if(!A)return;
+  ({
+   close(){modal=null;render()},bellClose(){bellOpen=false;render()},teamBack(){teamSel=null;render()},
+   report(){modal={k:'rep'};render()},
+   repCopy(){copyText($('#repT').value)},
+   tpl(){modal={k:'tpl',tpl:0,sel:new Set(TPL[0].tasks.map((_,j)=>j)),mode:S.tasks.length?'replace':'replace'};render()},
+   tplGo(){applyTemplate()},
+   sample(){modal=null;tab=role().r==='mgr'?'dash':null;teamSel=null;replaceAll(norm(sample()));toast('הפרויקט לדוגמה נטען.')},
+   send(){const to=$('#cTo').value,k=$('#cK').value,tid=$('#cT').value,txt=$('#cX').value.trim();if(!txt)return toast('כתבו הודעה קודם.');
+     if(k==='assign'){if(to==='all')return toast('בחרו איש צוות אחד למשימה חדשה.');const id=nid(S.tasks);tx(()=>{put('tasks',{id,name:txt,dur:3,deps:tid?[+tid]:[],ownerId:to,status:'todo',progress:0,blockReason:'',updatedAt:Date.now(),doneAt:null});sendMsg(to,'assign',`הוספתי לך משימה חדשה: ${txt}`,id)});toast(`המשימה נוספה ל${mname(to)}. אפשר לכוון משך ותלויות בלשונית התוכנית.`)}
+     else{tx(()=>sendMsg(to,k,txt,tid?+tid:null));toast(to==='all'?'ההודעה נשלחה לכל הצוות.':`ההודעה נשלחה ל${mname(to)}.`)}},
+   readAll(){tx(()=>{for(const x of unreadFor(me()))put('msgs',{...x,read:true})})},
+   fuAdd(){const t=$('#fuT').value.trim(),dd=$('#fuD').value,m=$('#fuM').value;if(!t)return toast('כתבו על מה המעקב.');tx(()=>put('followups',{id:uid(),text:t,due:isoRe.test(dd)?dd:TODAY,memberId:m||null,taskId:null,done:false}))},
+   mFu(){const t=$('#mFuT').value.trim(),dd=$('#mFuD').value,task=get('tasks',modal.id);if(!t)return;tx(()=>put('followups',{id:uid(),text:t,due:isoRe.test(dd)?dd:TODAY,memberId:task?.ownerId||null,taskId:task?.id??null,done:false}));toast('התזכורת נוספה למעקבים שלך.')},
+   mSend(){const t=get('tasks',modal.id),k=$('#mK').value,txt=$('#mX').value.trim();if(!t||!txt)return toast('כתבו הודעה קודם.');const mgr=role().r==='mgr',to=mgr?t.ownerId:'mgr';if(!to)return toast('למשימה אין אחראי.');
+     tx(()=>{sendMsg(to,k,txt,t.id);if(!mgr)put('tasks',{...get('tasks',t.id),updatedAt:Date.now()})});toast('ההודעה נשלחה.')},
+   addT(){const id=nid(S.tasks),last=S.tasks[S.tasks.length-1];tx(()=>put('tasks',{id,name:'משימה חדשה',dur:3,deps:last?[last.id]:[],ownerId:null,status:'todo',progress:0,blockReason:'',updatedAt:Date.now(),doneAt:null}));const f=$('#t'+id+'-name');if(f){f.focus();f.select()}},
+   delSel(){const ids=[...sel];if(!ids.length)return;tx(()=>removeTasks(ids));toast(`נמחקו ${plural(ids.length,'משימה אחת','משימות')}. אפשר לבטל.`)},
+   wiM(){wi.days=(+wi.days||0)-1;if(wi.id==null&&S.tasks.length)wi.id=S.tasks[0].id;render()},wiP(){wi.days=(+wi.days||0)+1;if(wi.id==null&&S.tasks.length)wi.id=S.tasks[0].id;render()},
+   wiX(){wi={id:null,days:2};render()},
+   wiA(){const t=get('tasks',wi.id);if(!t||!wi.days)return;const nd=Math.max(0,dur(t)+wi.days);wi={id:null,days:2};tx(()=>put('tasks',{...t,dur:nd}));toast('השינוי הוחל על התוכנית.')},
+   addR(){const id=nid(S.risks);rfilter=null;tx(()=>put('risks',{id,title:'סיכון חדש',p:3,i:3,taskId:null,ownerId:null,mitigation:'',status:'Open'}));const f=$('#r'+id+'-title');if(f){f.focus();f.select()}},
+   rfClear(){rfilter=null;render()},
+   pmAdd(){const lines=$('#pm').value.split('\n').map(s=>s.trim()).filter(Boolean);if(!lines.length)return toast('כתבו קודם לפחות סיבה אחת.');rfilter=null;
+     tx(()=>{let id=nid(S.risks);lines.forEach(l=>put('risks',{id:id++,title:l,p:3,i:3,taskId:null,ownerId:null,mitigation:'',status:'Open'}))});toast(`נוספו ${plural(lines.length,'סיכון אחד','סיכונים')}. דרגו אותם וקשרו למשימות.`)},
+   addM(){const id='m'+uid().slice(-6);tx(()=>put('members',{id,name:'איש צוות חדש',title:'',color:COLORS[S.members.length%COLORS.length],userId:null}));const f=$('#m'+id+'-name');if(f){f.focus();f.select()}},
+   offAdd(){const v=$('#offD').value;if(isoRe.test(v)&&!S.meta.cal.off.includes(v))tx(()=>setCal({off:[...S.meta.cal.off,v]}))},
+   copy(){copyText(JSON.stringify(S,null,2))},
+   dl(){try{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='pathline-project.json';document.body.appendChild(a);a.click();a.remove()}catch(err){toast('ההורדה לא זמינה כאן. השתמשו בהעתקה.')}},
+   imp(){doImport($('#imp').value)},
+   clr(){if(!clearArm){clearArm=true;render();setTimeout(()=>{clearArm=false;render()},4000);return}clearArm=false;tab='dash';teamSel=null;replaceAll(norm(emptyState()));toast('הפרויקט נמחק. אפשר לבטל.')},
+   suSave(){const R=role();if(R.r!=='member')return;const y=$('#suY').value.trim(),t=$('#suT').value.trim(),b=$('#suB').value.trim();if(!y&&!t&&!b)return toast('מלאו לפחות שאלה אחת.');
+     tx(()=>put('standups',{id:R.id+'_'+TODAY,memberId:R.id,date:TODAY,y,t,b,at:Date.now()}));toast(b?'העדכון נשלח. המנהל יקבל התראה על החסם.':'העדכון היומי נשלח. יום טוב!')}
+  })[A]?.();
+});
+function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('הועתק.'),()=>{const ta=$('#repT')||$('#json');if(ta){ta.focus();ta.select()}toast('הטקסט מסומן. להעתקה לחצו Ctrl+C')})}
+function doImport(txt){try{const s=JSON.parse(txt);if(!valid(s))throw 0;replaceAll(norm(s));toast('הנתונים יובאו בהצלחה.')}catch(e){toast('הנתונים לא נראים כמו ייצוא מהכלי הזה.')}}
+
+document.addEventListener('change',e=>{const el=e.target,d=el.dataset;
+  if(el.id==='as'){VIEW=el.value;tab=null;teamSel=null;modal=null;bellOpen=false;hist=[];render();return}
+  if(el.id==='pname'||el.id==='sName')return tx(()=>setMeta({...S.meta,name:el.value.trim()||'פרויקט חדש'}),true);
+  if(el.id==='sMgr')return tx(()=>setMeta({...S.meta,manager:el.value.trim()||'מנהל הפרויקט'}),true);
+  if(el.id==='sStart'){if(isoRe.test(el.value))tx(()=>setMeta({...S.meta,start:el.value}),true);return}
+  if(el.id==='week')return tx(()=>setCal({week:WEEK[el.value]?el.value:'sun-thu'}));
+  if(el.id==='hol')return tx(()=>setCal({holidays:el.checked}));
+  if(el.id==='wiT'){wi.id=el.value===''?null:+el.value;render();return}
+  if(el.id==='wiD'){wi.days=num(el.value,-999,999,0);render();return}
+  if(el.id==='selAll'){if(el.checked)S.tasks.forEach(t=>sel.add(t.id));else sel.clear();render();return}
+  if(d.sel){const id=+d.sel;el.checked?sel.add(id):sel.delete(id);render();return}
+  if(d.fu){upd('followups',d.fu,{done:el.checked});render();return}
+  if(d.tplt!=null){const i=+d.tplt;el.checked?modal.sel.add(i):modal.sel.delete(i);render();return}
+  if(el.name==='tm'){modal.mode=el.value;return}
+  if(el.id==='mP'){const t=get('tasks',modal.id);if(!t||!canTask(t))return;const p=+el.value;tx(()=>{const st=p>=100?'done':t.status==='done'?'doing':t.status==='todo'&&p>0?'doing':t.status;put('tasks',{...t,progress:p,status:st,doneAt:st==='done'?TODAY:null,updatedAt:Date.now()})});return}
+  if(el.id==='mB'){const t=get('tasks',modal.id);if(t)tx(()=>put('tasks',{...t,blockReason:el.value.trim(),updatedAt:Date.now()}),true);return}
+  if(d.t){const t=get('tasks',+d.t);if(!t)return;tx(()=>{const p={};
+    if(d.f==='dur')p.dur=num(el.value,0,9999,0);
+    else if(d.f==='deps'){const ids=new Set(S.tasks.map(x=>x.id));p.deps=[...new Set(el.value.split(/[^0-9]+/).filter(Boolean).map(Number))].filter(n=>n!==t.id&&ids.has(n))}
+    else if(d.f==='ownerId')p.ownerId=el.value||null;else p[d.f]=el.value;put('tasks',{...t,...p})},true);return}
+  if(d.r){const r=get('risks',+d.r);if(!r)return;tx(()=>{const p={};if(d.f==='p'||d.f==='i')p[d.f]=+el.value;else if(d.f==='taskId')p.taskId=el.value===''?null:+el.value;else if(d.f==='ownerId')p.ownerId=el.value||null;else p[d.f]=el.value;put('risks',{...r,...p})},true);return}
+  if(d.m){const m=get('members',d.m);if(m)tx(()=>put('members',{...m,[d.f]:el.value.trim()}),true);return}
+  if(el.id==='cTo'){const sel2=$('#cT');if(sel2){const to=el.value;sel2.innerHTML=topts(null,to==='all'?S.tasks:S.tasks.filter(t=>t.ownerId===to),'כללי, בלי משימה')}return}
+  if(el.id==='file'&&el.files[0]){el.files[0].text().then(doImport).catch(()=>toast('לא הצלחנו לקרוא את הקובץ.'))}
+});
+document.addEventListener('input',e=>{const el=e.target;
+  if(el.id==='wiD'&&el.value!==''&&el.value!=='-'){wi.days=num(el.value,-999,999,0);const K=lastK;K.CS=wi.id!=null&&get('tasks',wi.id)?cpm(wi):K.C;const r=$('#wiR');if(r)r.innerHTML=wiText(K);drawG()}
+  if(el.id==='mP'){const v=$('#mPv');if(v)v.textContent=el.value+'%'}
+  if(el.id==='cX'){const a=$('#cWa');if(a)a.href=wa(el.value)}
+  if(el.id==='mX'){const a=$('#mWa');if(a)a.href=wa(el.value)}
+  if(el.id==='repT'){const a=$('#repWa');if(a)a.href=wa(el.value)}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal){modal=null;render()}else if(bellOpen){bellOpen=false;render()}else if(!$('#cop').hidden)$('#cop').hidden=true}
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}
+  if(e.target.id==='copIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#copForm').requestSubmit()}});
+
+/* ---------- copilot ---------- */
+let sampleFn=null,sampleTried=false,busy=false;
+async function getSample(){if(sampleTried)return sampleFn;sampleTried=true;try{if(window.claude&&window.claude.use)sampleFn=await window.claude.use('sample')}catch(e){sampleFn=null}return sampleFn}
+function openCop(){$('#cop').hidden=false;bellOpen=false;renderBell(lastK);if(!chat.length){chat.push({r:'a',t:greet()})}drawChat();drawChips();setTimeout(()=>$('#copIn').focus(),50)}
+function greet(){const R=role();return R.r==='member'?`היי ${mname(R.id)}! אני מכיר את כל הפרויקט: המשימות שלך, הדדליינים וההודעות. אפשר לשאול אותי על מה להתמקד, איך לפרק משימה או איך לנסח עדכון למנהל.`:`היי ${S.meta.manager}! אני מכיר את התוכנית, הצוות, ההתקדמות והסיכונים. שאלו אותי מה המצב, מי צריך עזרה או מה כדאי לעשות היום.`}
+function drawChips(){const c=$('#copChips');if(!c||$('#cop').hidden)return;const R=role();
+  const q=R.r==='member'?['על מה להתמקד היום?','מה הדדליינים שלי השבוע?','איך לפרק משימה גדולה?','נסח לי עדכון למנהל']:['מה המצב בפרויקט?','מי מאחר ולמה?','מה בסיכון?','מה הנתיב הקריטי?','איך מחולק העומס בצוות?','כתוב דוח שבועי'];
+  c.innerHTML=q.map(x=>`<button data-cq="${esc(x)}">${esc(x)}</button>`).join('');
+  $('#copNote').textContent=sampleFn?'מחובר ל־Claude ומכיר את נתוני הפרויקט':'מצב הדגמה: עונה מתוך נתוני הפרויקט'}
+function md(t){let h=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const lines=h.split('\n');let out='',inL=false;
+  for(const l of lines){const m=l.match(/^\s*[-•*]\s+(.*)/);if(m){if(!inL){out+='<ul>';inL=true}out+=`<li>${m[1]}</li>`}else{if(inL){out+='</ul>';inL=false}out+=l?l+'<br>':'<br>'}}
+  if(inL)out+='</ul>';return out.replace(/(<br>)+$/,'')}
+function drawChat(){const L=$('#copLog');L.innerHTML=chat.map(m=>`<div class="bub ${m.r}">${m.pending&&!m.t?'חושב…':m.r==='a'?md(m.t):esc(m.t)}</div>`).join('');L.scrollTop=L.scrollHeight}
+$('#copForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#copIn').value.trim();if(!v)return;$('#copIn').value='';ask(v)});
+async function ask(q){if(busy)return;busy=true;chat.push({r:'u',t:q});const a={r:'a',t:'',pending:true};chat.push(a);drawChat();
+  const s=await getSample();drawChips();
+  if(s){try{const res=await s(buildPrompt(q),{cache:false,onText:({text})=>{a.t=text;drawChat()}});a.t=res.text||a.t}
+    catch(err){a.t=(err&&err.code==='rate_limited'?'הגעתי למגבלת השימוש לרגע. בינתיים, תשובה מתוך הנתונים:\n\n':err&&err.code==='not_granted'?'':'')+localAnswer(q);if(err&&err.code==='not_granted'){sampleFn=null;drawChips()}}}
+  else{await new Promise(r=>setTimeout(r,250));a.t=localAnswer(q)}
+  a.pending=false;busy=false;drawChat()}
+function context(){const K=lastK,R=role(),L=[];
+  L.push(`פרויקט: ${S.meta.name}. מנהל: ${S.meta.manager}. היום: ${TODAY}. שבוע עבודה: ${S.meta.cal.week}.`);
+  if(K.ok)L.push(`ציון בריאות ${K.health.score} (${K.health.label}). הושלם ${K.pctDone}% מול ${K.pctPlan}% מתוכנן. סיום מתוכנן ${iso(workDate(lastDay(0,K.C.end)))}, צפי ${iso(workDate(lastDay(0,K.fEnd)))}.`);
+  L.push('צוות: '+S.members.map(m=>`${m.name} (${m.title})`).join(', '));
+  L.push('משימות (מספר | שם | אחראי | התחלה | סיום | סטטוס | התקדמות | קריטית | מרווח | הערות):');
+  for(const t of S.tasks){const i=K.info.get(t.id)||{};L.push(`#${t.id} | ${t.name} | ${mname(t.ownerId)} | ${i.es!=null?iso(workDate(i.es)):'-'} | ${i.es!=null?iso(workDate(lastDay(i.es,i.ef))):'-'} | ${TS[t.status]} | ${t.status==='done'?100:t.progress}% | ${i.crit?'כן':'לא'} | ${i.slack??'-'} | ${[i.overdue?`באיחור ${i.overdue} ימים`:'',i.behind?'מפגרת':'',t.blockReason?'חסם: '+t.blockReason:'',i.waiting&&i.waiting.length?'מחכה ל-'+i.waiting.join(','):'',i.stale?`בלי עדכון ${i.stale} ימים`:''].filter(Boolean).join('; ')} | תלויה ב: ${(K.C.deps.get(t.id)||[]).join(',')||'-'}`)}
+  L.push('סיכונים פתוחים: '+(K.openR.map(r=>`${r.title} (ציון ${r.p*r.i}, משימה ${r.taskId??'-'}, מענה: ${r.mitigation||'-'})`).join('; ')||'אין'));
+  L.push('הודעות אחרונות: '+S.msgs.slice().sort((a,b)=>b.at-a.at).slice(0,12).map(x=>`${mname(x.from)}→${x.to==='mgr'?S.meta.manager:mname(x.to)} [${KIND[x.kind]}${x.taskId!=null?' #'+x.taskId:''}]: ${x.text}`).join(' || '));
+  L.push('עדכונים יומיים אחרונים: '+S.standups.slice().sort((a,b)=>b.at-a.at).slice(0,8).map(s=>`${mname(s.memberId)} ${s.date}: אתמול ${s.y||'-'}; היום ${s.t||'-'}; חסמים ${s.b||'אין'}`).join(' || '));
+  L.push(R.r==='member'?`המשתמש שמדבר איתך: ${mname(R.id)}, עובד בצוות.`:`המשתמש שמדבר איתך: ${S.meta.manager}, מנהל הפרויקט.`);
+  return L.join('\n')}
+function buildPrompt(q){const hist=chat.filter(m=>!m.pending&&m.t).slice(0,-1).slice(-10).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}));
+  while(hist.length&&hist[0].role!=='user')hist.shift();
+  const sys='אתה הקופיילוט של Pathline, כלי לניהול פרויקטים. ענה בעברית, קצר ומעשי: עד 8 שורות, עם רשימת נקודות כשזה עוזר. התבסס על נתוני הפרויקט שלמטה ועל עקרונות ניהול פרויקטים (נתיב קריטי, ניהול סיכונים, תקשורת בצוות). ציין מספרי משימות. אל תמציא נתונים שלא מופיעים. אל תשים פסיק לפני ו׳ החיבור.';
+  return [...hist,{role:'user',content:`${sys}\n\nנתוני הפרויקט:\n${context()}\n\nהשאלה: ${q}`}]}
+function localAnswer(q){const K=lastK,R=role(),I=t=>K.info.get(t.id)||{},has=(...w)=>w.some(x=>q.includes(x));
+  if(!S.tasks.length)return 'עוד אין משימות בפרויקט. התחילו מתבנית בלשונית התוכנית, ואז אוכל לעזור.';
+  if(K.C.cycle)return `יש תלות מעגלית בין המשימות ${K.C.cycle.map(i=>'#'+i).join(', ')}. כדאי לתקן את עמודת ״תלויה ב״ קודם.`;
+  const myT=R.r==='member'?S.tasks.filter(t=>t.ownerId===R.id):S.tasks;
+  const fm=S.tasks.find(t=>t.name.length>3&&q.includes(t.name))||(q.match(/#(\d+)/)?get('tasks',+q.match(/#(\d+)/)[1]):null);
+  if(fm){const i=I(fm);return `**#${fm.id} ${fm.name}**\n- אחראי: ${mname(fm.ownerId)}\n- ${TS[fm.status]}, ${i.prog}% (מתוכנן ${Math.round(i.pf*100)}%)\n- ${fmt(i.es)} עד ${fmt(lastDay(i.es,i.ef))}${i.crit?', בנתיב הקריטי: כל עיכוב מזיז את הסיום':`, מרווח של ${i.slack} ימים`}${i.overdue?`\n- באיחור של ${i.overdue} ימים`:''}${fm.blockReason&&fm.status==='blocked'?`\n- חסם: ${fm.blockReason}`:''}${i.waiting.length?`\n- מחכה ל־${i.waiting.map(x=>'#'+x).join(', ')}`:''}\n\nהצעד הבא: ${fm.status==='blocked'?'להסיר את החסם. מי יכול לאשר או לעזור עוד היום?':i.overdue?'לקבוע עם האחראי תאריך סיום חדש ולבדוק אם אפשר לפצל את המשימה.':fm.status==='todo'?'לקבוע מתי מתחילים ומה התוצר הראשון.':'לוודא שיש עדכון התקדמות לפחות פעם ביומיים.'}`}
+  if(has('דוח','שבועי'))return report(K);
+  if(has('עומס','מחולק','חלוקה')){const m=S.members.map(x=>[x,S.tasks.filter(t=>t.ownerId===x.id&&t.status!=='done').reduce((a,t)=>a+dur(t)*(1-t.progress/100),0)]).sort((a,b)=>b[1]-a[1]);
+    return `**עבודה שנשארה לכל איש צוות (בימי עבודה):**\n${m.map(([x,v])=>`- ${x.name}: ${Math.round(v)}`).join('\n')}\n\nהעומס הכבד אצל ${m[0][0].name}. כדאי לבדוק אם אפשר להעביר משימה ממנו למי שפנוי יותר. מפת העומס בתמונת המצב מראה גם חפיפות בין משימות.`}
+  if(has('קריטי','נתיב')){const cp=S.tasks.filter(t=>I(t).crit).sort((a,b)=>I(a).es-I(b).es);return `**הנתיב הקריטי (${cp.length} משימות):**\n${cp.map(t=>`- #${t.id} ${t.name} (${mname(t.ownerId)}) · ${TS[t.status]}`).join('\n')}\n\nכל יום עיכוב באחת מהן מזיז את הסיום. במשימות אחרות יש מרווח, ושם אפשר לספוג עיכובים.`}
+  if(has('סיכון','בסיכון')){const r=K.openR.slice().sort((a,b)=>b.p*b.i-a.p*a.i).slice(0,4);const risky=myT.filter(t=>I(t).overdue||t.status==='blocked');
+    return `**מה בסיכון עכשיו:**\n${risky.map(t=>`- #${t.id} ${t.name}: ${t.status==='blocked'?'תקועה':`באיחור ${I(t).overdue} ימים`}${I(t).crit?' (קריטית)':''}`).join('\n')||'- אין משימות באיחור או תקועות'}\n\n**הסיכונים הגבוהים ברשימה:**\n${r.map(x=>`- ${x.title} (ציון ${x.p*x.i})${x.mitigation?': '+x.mitigation:''}`).join('\n')||'- אין'}`}
+  if(has('מאחר','איחור','מפגר','עיכוב','מאחרים')){const L=myT.filter(t=>I(t).overdue||I(t).behind||I(t).lateStart);if(!L.length)return 'אף משימה לא באיחור כרגע. יפה מאוד.';
+    return `**משימות שמתעכבות:**\n${L.map(t=>{const i=I(t);return `- #${t.id} ${t.name} (${mname(t.ownerId)}): ${i.overdue?`באיחור ${i.overdue} ימים`:i.behind?`${i.prog}% מתוך ${Math.round(i.pf*100)}% מתוכנן`:'לא התחילה בזמן'}${t.blockReason&&t.status==='blocked'?`. חסם: ${t.blockReason}`:i.waiting.length?`. מחכה ל־${i.waiting.map(x=>'#'+x).join(', ')}`:''}`}).join('\n')}\n\nהמלצה: להתחיל ממשימות קריטיות, לברר מה החסם בשיחה קצרה ולקבוע מעקב בעוד יומיים.`}
+  if(has('תקוע','חסם','חסום')){const b=myT.filter(t=>t.status==='blocked');return b.length?`**משימות תקועות:**\n${b.map(t=>`- #${t.id} ${t.name} (${mname(t.ownerId)}): ${t.blockReason||'לא צוין חסם'}`).join('\n')}\n\nאיך לשחרר חסם:\n- להגדיר מי בדיוק צריך לאשר או לספק משהו\n- לקבוע מועד אחרון לתשובה ולהסלים אם הוא עובר\n- למצוא עבודה שאפשר לקדם במקביל`:'אין משימות תקועות כרגע.'}
+  if(has('לפרק','פירוק','גדולה'))return 'איך לפרק משימה גדולה:\n- להגדיר את התוצר הסופי במשפט אחד\n- לחלק לשלבים של יום עד שלושה ימים\n- לסמן מה תלוי במה ומה אפשר לעשות במקביל\n- להתחיל מהחלק עם הכי הרבה אי־ודאות\n- לעדכן התקדמות בסוף כל שלב';
+  if(has('נסח','עדכון למנהל')){const t=myT.filter(x=>x.status!=='done').sort((a,b)=>I(a).es-I(b).es)[0];return t?`הצעה לעדכון:\n\nהיי ${S.meta.manager}, עדכון על ״${t.name}״: אני ב־${t.progress}%. מה שהתקדם: … מה שנשאר: … ${t.status==='blocked'?`החסם: ${t.blockReason||'…'}. אשמח לעזרה בזה.`:'אני צופה לסיים עד '+fmt(lastDay(I(t).es,I(t).ef))+'.'}\n\nאפשר להדביק את זה בחלון המשימה ולשלוח.`:'אין לך משימות פתוחות לעדכן.'}
+  if(has('דדליין','השבוע','מתי')){const L=myT.filter(t=>t.status!=='done'&&I(t).dueIn!=null&&I(t).dueIn<=5).sort((a,b)=>I(a).dueIn-I(b).dueIn);return L.length?`**דדליינים בימים הקרובים:**\n${L.map(t=>`- #${t.id} ${t.name}: ${I(t).overdue?`באיחור ${I(t).overdue} ימים`:I(t).dueIn===0?'היום':I(t).dueIn===1?'מחר':'עד '+fmt(lastDay(I(t).es,I(t).ef))}${R.r==='mgr'?` (${mname(t.ownerId)})`:''}`).join('\n')}`:'אין דדליינים בחמשת ימי העבודה הקרובים.'}
+  if(has('היום','להתמקד','לעשות','לטפל','עדיפות')){const rem=reminders(K).slice(0,5);return rem.length?`**סדר עדיפויות להיום:**\n${rem.map((r,i)=>`- ${i+1}. ${r.text}`).join('\n')}\n\n${R.r==='mgr'?'טיפ: התחילו מהחסמים. כל יום שמשימה קריטית תקועה הוא יום שהפרויקט מאחר.':'טיפ: עדכון קצר למנהל על מה שמתעכב חוסך הרבה שאלות.'}`:'אין כרגע תזכורות פתוחות. זה זמן טוב לקדם משימה שמתחילה בקרוב או לחשוב על סיכונים.'}
+  if(has('מצב','סטטוס','סיכום','איך הולך')){const H=K.health;return `**תמונת מצב:**\n- בריאות: ${H.score} (${H.label})\n- הושלמו ${K.pctDone}% מול ${K.pctPlan}% מתוכנן\n- צפי סיום: ${fmtY(lastDay(0,K.fEnd))}${K.delay?` (${plural(K.delay,'יום','ימים')} אחרי התוכנית)`:''}\n${H.drivers.map(d=>`- ${d[0]}`).join('\n')}\n\n${K.delay?'כדי לחזור למסלול: להסיר חסמים במשימות הקריטיות ולבדוק במצב ״מה אם״ איזה קיצור מחזיר הכי הרבה ימים.':'הפרויקט במסלול. שווה לעבור על הסיכונים הגבוהים.'}`}
+  return `אפשר לשאול אותי למשל:\n- מה המצב בפרויקט?\n- ${R.r==='mgr'?'מי מאחר ולמה?':'על מה להתמקד היום?'}\n- מה בסיכון?\n- מה הנתיב הקריטי?\n- שאלה על משימה מסוימת, לפי שם או מספר (למשל #5)\n\nבמצב הדגמה אני עונה מתוך נתוני הפרויקט. בגרסת הצוות בתוך Claude אני עונה חופשי על כל שאלה.`}
+
+/* ---------- shared mode bootstrap ---------- */
+(async()=>{
+  if(!(window.claude&&window.claude.use))return;
+  try{
+    const [d,u]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    getSample().then(drawChips);
+    if(!d||!u)return;
+    db=d;userCap=u;isOwner=!!(await u.isOwner());myUid=await u.id();
+    try{const cw=await u.can('data.write');if(cw===false)readOnly=true}catch(e){}
+    MODE='shared';S=norm(emptyState());hist=[];$('#h1').textContent='טוען את הפרויקט…';$('#main').innerHTML='<p class="note">טוען נתונים משותפים…</p>';
+    let first=0;const need=COLLS.length+1,timer=setTimeout(()=>{loaded=true;render();toast('הנתונים עדיין לא נטענו במלואם. ייתכן שהם לא מעודכנים.')},10000);
+    const seen=new Set();const mark=(k,snap)=>{if(!snap.metadata.fromCache&&!seen.has(k)){seen.add(k);if(seen.size>=need){clearTimeout(timer);loaded=true}}};
+    db.doc('meta/project').onSnapshot(s=>{S.meta=nMeta(s.exists?s.data():null);if(!s.exists)S.meta=emptyState().meta;mark('meta',s);scheduleRender()},e=>{clearTimeout(timer);toast('לא הצלחנו לטעון את הפרויקט.')});
+    for(const c of COLLS)db.collection(c).onSnapshot(q=>{S[c]=q.docs.map(x=>NORM[c]({...x.data()})).filter(Boolean);mark(c,q);scheduleRender()},e=>{clearTimeout(timer)});
+    render();
+  }catch(e){}
+})();
+
+/* ---------- start ---------- */
+try{const h=location.hash.slice(1);if(h)tab=h}catch(e){}
+render();
+}
+</script>
+</body>
+</html>
