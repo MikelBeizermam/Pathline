@@ -8,7 +8,7 @@
 
 האתר נפתח במצב הדגמה עם פרויקט מלא: צוות של שישה אנשים, 12 משימות, הודעות, התראות וסיכונים. אתם צופים בפרויקט בתור מנהל הפרויקט, ובתפריט ״צפייה בתור״ אפשר לעבור ללוח של כל עובד.
 
-![תמונת המצב של המנהל](docs/dashboard.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/dashboard.png"><img src="docs/dashboard.png" alt="תמונת המצב של המנהל"></picture>
 
 ---
 
@@ -72,14 +72,14 @@ Pathline מחבר בין התוכנית לביצוע. כל עדכון של עו�
 
 ### הצוות ולוח המשימות האישי
 
-![הלוח של עובד](docs/team-board.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/team-board.png"><img src="docs/team-board.png" alt="הלוח של עובד"></picture>
 
 - כרטיס לכל עובד עם ההתקדמות שלו, משימות באיחור ועדכון אחרון. לחיצה פותחת את הלוח שלו.
 - לוח משימות בארבעה שלבים: לביצוע, בעבודה, תקוע והושלם.
 - **חלון משימה** שבו מעדכנים סטטוס ואחוז התקדמות, כותבים מה חוסם ושולחים עדכון. יש בו גם כפתור להוספת הדדליין ליומן.
 - **עדכון יומי** בשלוש שאלות: מה עשיתי אתמול, מה אעשה היום ומה חוסם אותי. הוא מחליף את ישיבת הבוקר, וחסם שנכתב בו מופיע אצל המנהל כהתראה.
 
-<p align="center"><img src="docs/task.png" width="420" alt="חלון משימה"> <img src="docs/mobile.png" width="260" alt="הלוח האישי בטלפון"></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/task.png"><img src="docs/task.png" alt="חלון משימה" width="420"></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/mobile.png"><img src="docs/mobile.png" alt="הלוח האישי בטלפון" width="260"></picture></p>
 
 ### תזכורות והודעות
 - **התראות לפי תפקיד.** העובד מקבל התראה על דדליין היום או מחר, על משימה שהגיע הזמן להתחיל ועל עדכון שחסר. המנהל מקבל התראה על חסמים, איחורים ומעקבים.
@@ -87,7 +87,7 @@ Pathline מחבר בין התוכנית לביצוע. כל עדכון של עו�
 
 ### תכנון ולוח זמנים
 
-![לוח הזמנים ומצב ״מה אם״](docs/plan.png)
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/plan.png"><img src="docs/plan.png" alt="לוח הזמנים ומצב ״מה אם״"></picture>
 
 - **חישוב נתיב קריטי** ותרשים גאנט מימין לשמאל, עם קו ״היום״ ועם ההתקדמות של כל משימה.
 - **מצב ״מה אם״:** בוחרים משימה ומספר ימי עיכוב או קיצור, ורואים מיד איך זה משפיע על תאריך הסיום ואילו משימות הופכות לקריטיות.
@@ -102,7 +102,7 @@ Pathline מחבר בין התוכנית לביצוע. כל עדכון של עו�
 
 ### קופיילוט
 
-<p align="center"><img src="docs/copilot.png" width="300" alt="הקופיילוט"></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark/copilot.png"><img src="docs/copilot.png" alt="הקופיילוט" width="300"></picture></p>
 
 צ׳אט שזמין לכל המשתמשים ומכיר את כל נתוני הפרויקט: משימות, התקדמות, סיכונים, הודעות ועדכונים יומיים. המנהל יכול לשאול ״מי מאחר ולמה?״ ועובד יכול לשאול ״על מה להתמקד היום?״. השאלות המוצעות משתנות לפי התפקיד.
 
